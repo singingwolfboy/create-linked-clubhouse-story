@@ -1,34 +1,46 @@
 {
-  "name": "javascript-action",
+  "name": "create-linked-clubhouse-story",
   "version": "1.0.0",
-  "description": "JavaScript Action Template",
-  "main": "index.js",
+  "description": "A GitHub Action to automatically create a linked story on Clubhouse.io",
+  "main": "lib/main.js",
   "scripts": {
-    "lint": "eslint index.js",
-    "package": "ncc build index.js -o dist",
-    "test": "eslint index.js && jest"
+    "build": "tsc",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "pack": "ncc build",
+    "test": "jest",
+    "all": "npm run build && npm run format && npm run lint && npm run pack && npm test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/javascript-action.git"
+    "url": "git+https://github.com/singingwolfboy/create-linked-clubhouse-story.git"
   },
   "keywords": [
     "GitHub",
-    "Actions",
-    "JavaScript"
+    "Pull Request",
+    "Clubhouse"
   ],
-  "author": "GitHub",
+  "author": "David Baumgold <david@davidbaumgold.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/actions/javascript-action/issues"
+    "url": "https://github.com/singingwolfboy/create-linked-clubhouse-story/issues"
   },
-  "homepage": "https://github.com/actions/javascript-action#readme",
+  "homepage": "https://github.com/singingwolfboy/create-linked-clubhouse-story#readme",
   "dependencies": {
-    "@actions/core": "^1.1.1"
+    "@actions/core": "^1.2.3"
   },
   "devDependencies": {
-    "@zeit/ncc": "^0.20.5",
-    "eslint": "^6.3.0",
-    "jest": "^24.9.0"
+    "@zeit/ncc": "^0.22.1",
+    "eslint": "^6.8.0",
+    "eslint-plugin-github": "^3.4.1",
+    "eslint-plugin-jest": "^23.8.2",
+    "jest": "^25.3.0",
+    "prettier": "^2.0.4",
+    "ts-jest": "^25.3.1",
+    "typescript": "^3.8.3"
+  },
+  "jest": {
+    "preset": "ts-jest"
   }
 }

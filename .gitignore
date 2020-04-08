@@ -63,3 +63,7 @@ typings/
 
 # next.js build output
 .next
+
+# Ignore built ts files
+__tests__/runner/*
+lib/**/*

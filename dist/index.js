@@ -34,7 +34,7 @@ module.exports =
 /******/ 	// the startup function
 /******/ 	function startup() {
 /******/ 		// Load entry module and return exports
-/******/ 		return __webpack_require__(104);
+/******/ 		return __webpack_require__(198);
 /******/ 	};
 /******/
 /******/ 	// run startup
@@ -50,31 +50,39 @@ module.exports = require("os");
 
 /***/ }),
 
-/***/ 104:
-/***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
+/***/ 198:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
-const core = __webpack_require__(470);
-const wait = __webpack_require__(949);
+"use strict";
 
-
-// most @actions toolkit packages have async methods
-async function run() {
-  try { 
-    const ms = core.getInput('milliseconds');
-    console.log(`Waiting ${ms} milliseconds ...`)
-
-    core.debug((new Date()).toTimeString())
-    wait(parseInt(ms));
-    core.debug((new Date()).toTimeString())
-
-    core.setOutput('time', new Date().toTimeString());
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core_1 = __webpack_require__(470);
+// import { wait } from "./wait";
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const ms = core_1.getInput("milliseconds");
+            core_1.debug(`Waiting ${ms} milliseconds ...`);
+            core_1.debug(new Date().toTimeString());
+            // await wait(parseInt(ms, 10));
+            core_1.debug(new Date().toTimeString());
+            core_1.setOutput("time", new Date().toTimeString());
+        }
+        catch (error) {
+            core_1.setFailed(error.message);
+        }
+    });
 }
-
-run()
+run();
 
 
 /***/ }),
@@ -84,17 +92,24 @@ run()
 
 "use strict";
 
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const os = __webpack_require__(87);
+const os = __importStar(__webpack_require__(87));
 /**
  * Commands
  *
  * Command Format:
- *   ##[name key=value;key=value]message
+ *   ::name key=value,key=value::message
  *
  * Examples:
- *   ##[warning]This is the user warning message
- *   ##[set-secret name=mypassword]definitelyNotAPassword!
+ *   ::warning::This is the message
+ *   ::set-env name=MY_VAR::some value
  */
 function issueCommand(command, properties, message) {
     const cmd = new Command(command, properties, message);
@@ -119,34 +134,39 @@ class Command {
         let cmdStr = CMD_STRING + this.command;
         if (this.properties && Object.keys(this.properties).length > 0) {
             cmdStr += ' ';
+            let first = true;
             for (const key in this.properties) {
                 if (this.properties.hasOwnProperty(key)) {
                     const val = this.properties[key];
                     if (val) {
-                        // safely append the val - avoid blowing up when attempting to
-                        // call .replace() if message is not a string for some reason
-                        cmdStr += `${key}=${escape(`${val || ''}`)},`;
+                        if (first) {
+                            first = false;
+                        }
+                        else {
+                            cmdStr += ',';
+                        }
+                        cmdStr += `${key}=${escapeProperty(val)}`;
                     }
                 }
             }
         }
-        cmdStr += CMD_STRING;
-        // safely append the message - avoid blowing up when attempting to
-        // call .replace() if message is not a string for some reason
-        const message = `${this.message || ''}`;
-        cmdStr += escapeData(message);
+        cmdStr += `${CMD_STRING}${escapeData(this.message)}`;
         return cmdStr;
     }
 }
 function escapeData(s) {
-    return s.replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+    return (s || '')
+        .replace(/%/g, '%25')
+        .replace(/\r/g, '%0D')
+        .replace(/\n/g, '%0A');
 }
-function escape(s) {
-    return s
+function escapeProperty(s) {
+    return (s || '')
+        .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A')
-        .replace(/]/g, '%5D')
-        .replace(/;/g, '%3B');
+        .replace(/:/g, '%3A')
+        .replace(/,/g, '%2C');
 }
 //# sourceMappingURL=command.js.map
 
@@ -166,10 +186,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const command_1 = __webpack_require__(431);
-const os = __webpack_require__(87);
-const path = __webpack_require__(622);
+const os = __importStar(__webpack_require__(87));
+const path = __importStar(__webpack_require__(622));
 /**
  * The code to exit an action
  */
@@ -188,7 +215,7 @@ var ExitCode;
 // Variables
 //-----------------------------------------------------------------------
 /**
- * sets env variable for this action and future actions in the job
+ * Sets env variable for this action and future actions in the job
  * @param name the name of the variable to set
  * @param val the value of the variable
  */
@@ -198,18 +225,13 @@ function exportVariable(name, val) {
 }
 exports.exportVariable = exportVariable;
 /**
- * exports the variable and registers a secret which will get masked from logs
- * @param name the name of the variable to set
- * @param val value of the secret
+ * Registers a secret which will get masked from logs
+ * @param secret value of the secret
  */
-function exportSecret(name, val) {
-    exportVariable(name, val);
-    // the runner will error with not implemented
-    // leaving the function but raising the error earlier
-    command_1.issueCommand('set-secret', {}, val);
-    throw new Error('Not implemented.');
+function setSecret(secret) {
+    command_1.issueCommand('add-mask', {}, secret);
 }
-exports.exportSecret = exportSecret;
+exports.setSecret = setSecret;
 /**
  * Prepends inputPath to the PATH (for this action and future actions)
  * @param inputPath
@@ -260,6 +282,13 @@ exports.setFailed = setFailed;
 //-----------------------------------------------------------------------
 // Logging Commands
 //-----------------------------------------------------------------------
+/**
+ * Gets whether Actions Step Debug is on or not
+ */
+function isDebug() {
+    return process.env['RUNNER_DEBUG'] === '1';
+}
+exports.isDebug = isDebug;
 /**
  * Writes debug message to user log
  * @param message debug message
@@ -332,6 +361,29 @@ function group(name, fn) {
     });
 }
 exports.group = group;
+//-----------------------------------------------------------------------
+// Wrapper action state
+//-----------------------------------------------------------------------
+/**
+ * Saves state for current action, the state can only be retrieved by this action's post job execution.
+ *
+ * @param     name     name of the state to store
+ * @param     value    value to store
+ */
+function saveState(name, value) {
+    command_1.issueCommand('save-state', { name }, value);
+}
+exports.saveState = saveState;
+/**
+ * Gets the value of an state set by this action's main execution.
+ *
+ * @param     name     name of the state to get
+ * @returns   string
+ */
+function getState(name) {
+    return process.env[`STATE_${name}`] || '';
+}
+exports.getState = getState;
 //# sourceMappingURL=core.js.map
 
 /***/ }),
@@ -340,24 +392,6 @@ exports.group = group;
 /***/ (function(module) {
 
 module.exports = require("path");
-
-/***/ }),
-
-/***/ 949:
-/***/ (function(module) {
-
-let wait = function(milliseconds) {
-  return new Promise((resolve, reject) => {
-    if (typeof(milliseconds) !== 'number') { 
-      throw new Error('milleseconds not a number'); 
-    }
-
-    setTimeout(() => resolve("done!"), milliseconds)
-  });
-}
-
-module.exports = wait;
-
 
 /***/ })
 
