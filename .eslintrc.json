@@ -1,15 +1,23 @@
 {
-  "plugins": ["jest", "@typescript-eslint"],
-  "extends": ["plugin:github/es6"],
+  "root": true,
   "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaVersion": 9,
-    "sourceType": "module",
-    "project": "./tsconfig.json"
-  },
+  "plugins": ["@typescript-eslint", "jest"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:github/es6",
+    "plugin:jest/recommended",
+    "prettier/@typescript-eslint"
+  ],
   "env": {
     "commonjs": true,
     "es6": true,
     "node": true
+  },
+  "rules": {
+    "eslint-comments/no-use": "off",
+    "camelcase": "off",
+    "@typescript-eslint/camelcase": "off"
   }
 }

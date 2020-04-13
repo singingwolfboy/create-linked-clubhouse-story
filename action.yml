@@ -3,11 +3,13 @@ description: >-
   When a pull request is opened, create a linked story on Clubhouse
   if the description does not already link to one.
 inputs:
-  CLUBHOUSE_API_TOKEN:
+  CLUBHOUSE-TOKEN:
     description: "API token used for making auhenticated requests to Clubhouse.io"
     required: true
+  project-name:
+    required: true
 outputs:
-  story_id:
+  story-id:
     description: "The ID of the associated story on Clubhouse"
 runs:
   using: "node12"
