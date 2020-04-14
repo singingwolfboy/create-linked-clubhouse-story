@@ -3512,6 +3512,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = __webpack_require__(470);
 const github_1 = __webpack_require__(469);
 const http_client_1 = __webpack_require__(539);
+const clubhouseURLRegex = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)\/[A-Za-z0-9-]*/;
 function getClubhouseUserId(githubUsername, http) {
     return __awaiter(this, void 0, void 0, function* () {
         const CLUBHOUSE_TOKEN = core_1.getInput("clubhouse-token");
@@ -3556,6 +3557,70 @@ function getClubhouseProjectId(projectName, http) {
         return projectNameToClubhouseId.get(projectName);
     });
 }
+function createClubhouseStory(payload, http) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core_1.getInput("clubhouse-token");
+        const PROJECT_NAME = core_1.getInput("project-name");
+        const githubUsername = payload.pull_request.user.login;
+        const clubhouseUserId = yield getClubhouseUserId(githubUsername, http);
+        const clubhouseProjectId = yield getClubhouseProjectId(PROJECT_NAME, http);
+        const storyResponse = yield http.postJson(`https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`, {
+            name: payload.pull_request.title,
+            description: payload.pull_request.body,
+            owner_ids: [clubhouseUserId],
+            project_id: clubhouseProjectId,
+        });
+        if (storyResponse.statusCode !== 200) {
+            core_1.setFailed("Clubhouse API failure: /stories");
+            return null;
+        }
+        return storyResponse.result;
+    });
+}
+function getClubhouseURLFromPullRequest(payload) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // is there a clubhouse link in the description?
+        const results = payload.pull_request.body.match(clubhouseURLRegex);
+        if (results) {
+            return results[0];
+        }
+        // what about in the first page of comments?
+        const GITHUB_TOKEN = core_1.getInput("github-token");
+        const octokit = new github_1.GitHub(GITHUB_TOKEN);
+        const commentsResponse = yield octokit.issues.listComments({
+            owner: payload.repository.owner.login,
+            repo: payload.repository.name,
+            issue_number: payload.pull_request.number,
+        });
+        if (commentsResponse.status === 200) {
+            const commentWithURL = commentsResponse.data.find((comment) => clubhouseURLRegex.test(comment.body));
+            if (commentWithURL) {
+                const match = commentWithURL.body.match(clubhouseURLRegex);
+                if (match) {
+                    return match[0];
+                }
+            }
+        }
+        return null;
+    });
+}
+function addCommentToPullRequest(payload, comment) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const GITHUB_TOKEN = core_1.getInput("github-token");
+        const octokit = new github_1.GitHub(GITHUB_TOKEN);
+        const commentResponse = yield octokit.issues.createComment({
+            owner: payload.repository.owner.login,
+            repo: payload.repository.name,
+            issue_number: payload.pull_request.number,
+            body: comment,
+        });
+        if (commentResponse.status !== 200) {
+            core_1.setFailed("GitHub API failure: create comment");
+            return false;
+        }
+        return true;
+    });
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (github_1.context.eventName !== "pull_request") {
@@ -3564,23 +3629,24 @@ function run() {
         }
         const payload = github_1.context.payload;
         try {
-            const http = new http_client_1.HttpClient();
-            const CLUBHOUSE_TOKEN = core_1.getInput("clubhouse-token");
-            const PROJECT_NAME = core_1.getInput("project-name");
-            const githubUsername = payload.pull_request.user.login;
-            const clubhouseUserId = yield getClubhouseUserId(githubUsername, http);
-            const clubhouseProjectId = yield getClubhouseProjectId(PROJECT_NAME, http);
-            const storyResponse = yield http.postJson(`https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`, {
-                name: payload.pull_request.title,
-                description: payload.pull_request.body,
-                owner_ids: [clubhouseUserId],
-                project_id: clubhouseProjectId,
-            });
-            if (!storyResponse.result) {
-                core_1.setFailed("Clubhouse API failure: /stories");
+            const clubhouseURL = yield getClubhouseURLFromPullRequest(payload);
+            if (clubhouseURL) {
+                const match = clubhouseURL.match(clubhouseURLRegex);
+                if (match) {
+                    const storyId = match[1];
+                    core_1.setOutput("story-id", storyId);
+                }
                 return;
             }
-            core_1.setOutput("story-id", storyResponse.result.id.toString());
+            const http = new http_client_1.HttpClient();
+            const story = yield createClubhouseStory(payload, http);
+            if (!story) {
+                return;
+            }
+            core_1.setOutput("story-id", story.id.toString());
+            const url = `https://app.clubhouse.io/nylas/story/${story.id}/`;
+            const comment = `Clubhouse story: ${url}`;
+            yield addCommentToPullRequest(payload, comment);
         }
         catch (error) {
             core_1.setFailed(error.message);
