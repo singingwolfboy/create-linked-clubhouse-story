@@ -3,7 +3,12 @@ import * as core from "@actions/core";
 import { GitHub, context } from "@actions/github";
 import { WebhookPayloadPullRequest } from "@octokit/webhooks";
 import { HttpClient } from "@actions/http-client";
-import { ClubhouseMember, ClubhouseProject, ClubhouseStory } from "./types";
+import {
+  ClubhouseMember,
+  ClubhouseProject,
+  ClubhouseStory,
+  ClubhouseCreateStoryBody,
+} from "./types";
 
 const clubhouseURLRegex = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)\/[A-Za-z0-9-]*/;
 
@@ -113,13 +118,19 @@ async function createClubhouseStory(
   const githubUsername = payload.pull_request.user.login;
   const clubhouseUserId = await getClubhouseUserId(githubUsername, http);
   const clubhouseProjectId = await getClubhouseProjectId(PROJECT_NAME, http);
+  if (!clubhouseProjectId) {
+    core.setFailed(`Could not find Clubhouse ID for project: ${PROJECT_NAME}`);
+    return null;
+  }
 
-  const body = {
+  const body: ClubhouseCreateStoryBody = {
     name: payload.pull_request.title,
     description: payload.pull_request.body,
-    owner_ids: [clubhouseUserId],
     project_id: clubhouseProjectId,
   };
+  if (clubhouseUserId) {
+    body.owner_ids = [clubhouseUserId];
+  }
 
   try {
     const storyResponse = await http.postJson<ClubhouseStory>(

@@ -3599,12 +3599,18 @@ function createClubhouseStory(payload, http) {
         const githubUsername = payload.pull_request.user.login;
         const clubhouseUserId = yield getClubhouseUserId(githubUsername, http);
         const clubhouseProjectId = yield getClubhouseProjectId(PROJECT_NAME, http);
+        if (!clubhouseProjectId) {
+            core.setFailed(`Could not find Clubhouse ID for project: ${PROJECT_NAME}`);
+            return null;
+        }
         const body = {
             name: payload.pull_request.title,
             description: payload.pull_request.body,
-            owner_ids: [clubhouseUserId],
             project_id: clubhouseProjectId,
         };
+        if (clubhouseUserId) {
+            body.owner_ids = [clubhouseUserId];
+        }
         try {
             const storyResponse = yield http.postJson(`https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`, body);
             const story = storyResponse.result;

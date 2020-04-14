@@ -295,3 +295,67 @@ export interface ClubhouseStory {
   updated_at: string | null;
   workflow_state_id: number;
 }
+
+/** Request parameters for creating a Comment on a Clubhouse Story. */
+export interface ClubhouseCreateStoryCommentParams {
+  author_id?: string;
+  created_at?: string;
+  external_id?: string;
+  text: string;
+  updated_at?: string;
+}
+
+export interface ClubhouseCreateExternalTicketParams {
+  external_id: string;
+  external_url: string;
+}
+
+/** Request parameters for creating a Label on a Clubhouse story. */
+export interface ClubhouseCreateLabelParams {
+  color: string;
+  description: string;
+  external_id: string;
+  name: string;
+}
+
+export interface ClubhouseCreateStoryLinkParams {
+  object_id: number;
+  subject_id: number;
+  verb: "blocks" | "duplicates" | "relates to";
+}
+
+export interface ClubhouseCreateTaskParams {
+  complete?: boolean;
+  description: string;
+  external_id?: string;
+  owner_ids?: string[];
+}
+
+/** Create Story is used to add a new story to your Clubhouse. */
+export interface ClubhouseCreateStoryBody {
+  archived?: boolean;
+  comments?: ClubhouseCreateStoryCommentParams[];
+  completed_at_override?: string;
+  created_at?: string;
+  deadline?: string | null;
+  description?: string;
+  epic_id?: number | null;
+  estimate?: number | null;
+  external_id?: string;
+  external_tickets?: ClubhouseCreateExternalTicketParams[];
+  file_ids?: number[];
+  follower_ids?: string[];
+  iteration_id?: number | null;
+  labels?: ClubhouseCreateLabelParams[];
+  linked_file_ids?: number[];
+  name: string;
+  owner_ids?: string[];
+  project_id: number;
+  requested_by_id?: string;
+  started_at_override?: string;
+  story_links?: ClubhouseCreateStoryLinkParams[];
+  story_type?: "bug" | "chore" | "feature";
+  tasks?: ClubhouseCreateTaskParams[];
+  updated_at?: string;
+  workflow_state_id?: number;
+}
