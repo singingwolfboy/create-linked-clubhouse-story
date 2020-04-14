@@ -114,27 +114,35 @@ async function createClubhouseStory(
   const clubhouseUserId = await getClubhouseUserId(githubUsername, http);
   const clubhouseProjectId = await getClubhouseProjectId(PROJECT_NAME, http);
 
+  const body = {
+    name: payload.pull_request.title,
+    description: payload.pull_request.body,
+    owner_ids: [clubhouseUserId],
+    project_id: clubhouseProjectId,
+  };
+
   try {
     const storyResponse = await http.postJson<ClubhouseStory>(
       `https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`,
-      {
-        name: payload.pull_request.title,
-        description: payload.pull_request.body,
-        owner_ids: [clubhouseUserId],
-        project_id: clubhouseProjectId,
-      }
+      body
     );
     const story = storyResponse.result;
     if (!story) {
       core.setFailed(
-        `HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories`
+        `HTTP ${
+          storyResponse.statusCode
+        } https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}`
       );
       return null;
     }
     return storyResponse.result;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories\n${err.message}`
+      `HTTP ${
+        err.statusCode
+      } https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}\n${
+        err.message
+      }`
     );
     return null;
   }
