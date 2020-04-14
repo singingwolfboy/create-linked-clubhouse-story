@@ -1,4 +1,5 @@
-import { getInput, setOutput, setFailed, debug } from "@actions/core";
+// import { getInput, setOutput, setFailed, debug, error } from "@actions/core";
+import * as core from "@actions/core";
 import { GitHub, context } from "@actions/github";
 import { WebhookPayloadPullRequest } from "@octokit/webhooks";
 import { HttpClient } from "@actions/http-client";
@@ -6,29 +7,58 @@ import { ClubhouseMember, ClubhouseProject, ClubhouseStory } from "./types";
 
 const clubhouseURLRegex = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)\/[A-Za-z0-9-]*/;
 
+interface Stringable {
+  toString(): string;
+}
+
+/**
+ * Convert a Map to a sorted string representation. Useful for debugging.
+ *
+ * @param {Map} map - The input Map to convert to a string.
+ * @returns {string} Sorted string representation.
+ */
+function stringFromMap(map: Map<Stringable, Stringable>): string {
+  return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
+}
+
+const GITHUB_TOKEN: string = core.getInput("github-token", { required: true });
+const CLUBHOUSE_TOKEN: string = core.getInput("clubhouse-token", {
+  required: true,
+});
+const PROJECT_NAME: string = core.getInput("project-name", { required: true });
+
 async function getClubhouseUserId(
   githubUsername: string,
   http: HttpClient
 ): Promise<string | undefined> {
-  const CLUBHOUSE_TOKEN: string = getInput("clubhouse-token");
-  const GITHUB_TOKEN: string = getInput("github-token");
+  let emailToClubhouseId;
 
-  const membersResponse = await http.getJson<ClubhouseMember[]>(
-    `https://api.clubhouse.io/api/v3/members?token=${CLUBHOUSE_TOKEN}`
-  );
-  if (!membersResponse.result) {
-    setFailed("Clubhouse API failure: /members");
+  try {
+    const membersResponse = await http.getJson<ClubhouseMember[]>(
+      `https://api.clubhouse.io/api/v3/members?token=${CLUBHOUSE_TOKEN}`
+    );
+    const members = membersResponse.result;
+    if (!members) {
+      core.setFailed(
+        `HTTP ${membersResponse.statusCode} https://api.clubhouse.io/api/v3/members`
+      );
+      return;
+    }
+    emailToClubhouseId = members.reduce((e2id, member) => {
+      const email = member.profile.email_address;
+      const clubhouseId = member.id;
+      if (email) {
+        e2id.set(email, clubhouseId);
+      }
+      return e2id;
+    }, new Map<string, string>());
+    core.debug(`email to Clubhouse ID: ${stringFromMap(emailToClubhouseId)}`);
+  } catch (err) {
+    core.setFailed(
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members`
+    );
     return;
   }
-  const emailToClubhouseId = membersResponse.result.reduce((e2id, member) => {
-    const email = member.profile.email_address;
-    const clubhouseId = member.id;
-    if (email) {
-      e2id.set(email, clubhouseId);
-    }
-    return e2id;
-  }, new Map<string, string>());
-  debug(JSON.stringify(emailToClubhouseId));
 
   const octokit = new GitHub(GITHUB_TOKEN);
   const userResponse = await octokit.users.getByUsername({
@@ -37,6 +67,10 @@ async function getClubhouseUserId(
   const user = userResponse.data;
   if (user.email) {
     return emailToClubhouseId.get(user.email);
+  } else {
+    core.warning(
+      `could not get email address for GitHub user @${githubUsername}`
+    );
   }
 }
 
@@ -44,51 +78,66 @@ async function getClubhouseProjectId(
   projectName: string,
   http: HttpClient
 ): Promise<number | undefined> {
-  const CLUBHOUSE_TOKEN: string = getInput("clubhouse-token");
-
-  const projectsResponse = await http.getJson<ClubhouseProject[]>(
-    `https://api.clubhouse.io/api/v3/projects?token=${CLUBHOUSE_TOKEN}`
-  );
-  if (!projectsResponse.result) {
-    setFailed("Clubhouse API failure: /projects");
-    return;
-  }
-  const projectNameToClubhouseId = projectsResponse.result.reduce(
-    (p2id, project) => {
+  try {
+    const projectsResponse = await http.getJson<ClubhouseProject[]>(
+      `https://api.clubhouse.io/api/v3/projects?token=${CLUBHOUSE_TOKEN}`
+    );
+    const projects = projectsResponse.result;
+    if (!projects) {
+      core.setFailed(
+        `HTTP ${projectsResponse.statusCode} https://api.clubhouse.io/api/v3/projects`
+      );
+      return;
+    }
+    const projectNameToClubhouseId = projects.reduce((p2id, project) => {
       p2id.set(project.name, project.id);
       return p2id;
-    },
-    new Map<string, number>()
-  );
-  debug(JSON.stringify(projectNameToClubhouseId));
+    }, new Map<string, number>());
+    core.debug(
+      `Clubhouse project name to ID: ${stringFromMap(projectNameToClubhouseId)}`
+    );
 
-  return projectNameToClubhouseId.get(projectName);
+    return projectNameToClubhouseId.get(projectName);
+  } catch (err) {
+    core.setFailed(
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects`
+    );
+    return;
+  }
 }
 
 async function createClubhouseStory(
   payload: WebhookPayloadPullRequest,
   http: HttpClient
 ): Promise<ClubhouseStory | null> {
-  const CLUBHOUSE_TOKEN: string = getInput("clubhouse-token");
-  const PROJECT_NAME: string = getInput("project-name");
   const githubUsername = payload.pull_request.user.login;
   const clubhouseUserId = await getClubhouseUserId(githubUsername, http);
   const clubhouseProjectId = await getClubhouseProjectId(PROJECT_NAME, http);
 
-  const storyResponse = await http.postJson<ClubhouseStory>(
-    `https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`,
-    {
-      name: payload.pull_request.title,
-      description: payload.pull_request.body,
-      owner_ids: [clubhouseUserId],
-      project_id: clubhouseProjectId,
+  try {
+    const storyResponse = await http.postJson<ClubhouseStory>(
+      `https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`,
+      {
+        name: payload.pull_request.title,
+        description: payload.pull_request.body,
+        owner_ids: [clubhouseUserId],
+        project_id: clubhouseProjectId,
+      }
+    );
+    const story = storyResponse.result;
+    if (!story) {
+      core.setFailed(
+        `HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories`
+      );
+      return null;
     }
-  );
-  if (storyResponse.statusCode !== 200) {
-    setFailed("Clubhouse API failure: /stories");
+    return storyResponse.result;
+  } catch (err) {
+    core.setFailed(
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories`
+    );
     return null;
   }
-  return storyResponse.result;
 }
 
 async function getClubhouseURLFromPullRequest(
@@ -101,13 +150,13 @@ async function getClubhouseURLFromPullRequest(
   }
 
   // what about in the first page of comments?
-  const GITHUB_TOKEN: string = getInput("github-token");
   const octokit = new GitHub(GITHUB_TOKEN);
-  const commentsResponse = await octokit.issues.listComments({
+  const params = {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: payload.pull_request.number,
-  });
+  };
+  const commentsResponse = await octokit.issues.listComments(params);
   if (commentsResponse.status === 200) {
     const commentWithURL = commentsResponse.data.find((comment) =>
       clubhouseURLRegex.test(comment.body)
@@ -118,6 +167,12 @@ async function getClubhouseURLFromPullRequest(
         return match[0];
       }
     }
+  } else {
+    core.warning(
+      `HTTP ${
+        commentsResponse.status
+      } octokit.issues.listComments(${JSON.stringify(params)})`
+    );
   }
 
   return null;
@@ -127,16 +182,20 @@ async function addCommentToPullRequest(
   payload: WebhookPayloadPullRequest,
   comment: string
 ): Promise<boolean> {
-  const GITHUB_TOKEN: string = getInput("github-token");
   const octokit = new GitHub(GITHUB_TOKEN);
-  const commentResponse = await octokit.issues.createComment({
+  const params = {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: payload.pull_request.number,
     body: comment,
-  });
+  };
+  const commentResponse = await octokit.issues.createComment(params);
   if (commentResponse.status !== 200) {
-    setFailed("GitHub API failure: create comment");
+    core.setFailed(
+      `HTTP ${
+        commentResponse.status
+      } octokit.issues.createComment(${JSON.stringify(params)})`
+    );
     return false;
   }
   return true;
@@ -144,33 +203,30 @@ async function addCommentToPullRequest(
 
 async function run(): Promise<void> {
   if (context.eventName !== "pull_request") {
-    debug("This action only works with `pull_request` events");
+    core.setFailed("This action only works with `pull_request` events");
     return;
   }
-  const payload = context.payload as WebhookPayloadPullRequest;
-  try {
-    const clubhouseURL = await getClubhouseURLFromPullRequest(payload);
-    if (clubhouseURL) {
-      const match = clubhouseURL.match(clubhouseURLRegex);
-      if (match) {
-        const storyId = match[1];
-        setOutput("story-id", storyId);
-      }
-      return;
-    }
 
-    const http = new HttpClient();
-    const story = await createClubhouseStory(payload, http);
-    if (!story) {
-      return;
+  const payload = context.payload as WebhookPayloadPullRequest;
+  const clubhouseURL = await getClubhouseURLFromPullRequest(payload);
+  if (clubhouseURL) {
+    const match = clubhouseURL.match(clubhouseURLRegex);
+    if (match) {
+      const storyId = match[1];
+      core.setOutput("story-id", storyId);
     }
-    setOutput("story-id", story.id.toString());
-    const url = `https://app.clubhouse.io/nylas/story/${story.id}/`;
-    const comment = `Clubhouse story: ${url}`;
-    await addCommentToPullRequest(payload, comment);
-  } catch (error) {
-    setFailed(error.message);
+    return;
   }
+
+  const http = new HttpClient();
+  const story = await createClubhouseStory(payload, http);
+  if (!story) {
+    return;
+  }
+  core.setOutput("story-id", story.id.toString());
+  const url = `https://app.clubhouse.io/nylas/story/${story.id}/`;
+  const comment = `Clubhouse story: ${url}`;
+  await addCommentToPullRequest(payload, comment);
 }
 
 run();

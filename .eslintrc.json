@@ -17,6 +17,7 @@
   },
   "rules": {
     "eslint-comments/no-use": "off",
+    "import/no-namespace": "off",
     "camelcase": "off",
     "@typescript-eslint/camelcase": "off"
   }
