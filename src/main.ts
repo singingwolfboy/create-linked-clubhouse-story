@@ -127,6 +127,12 @@ async function createClubhouseStory(
     name: payload.pull_request.title,
     description: payload.pull_request.body,
     project_id: clubhouseProjectId,
+    external_tickets: [
+      {
+        external_id: payload.pull_request.id.toString(),
+        external_url: payload.pull_request.url,
+      },
+    ],
   };
   if (clubhouseUserId) {
     body.owner_ids = [clubhouseUserId];
