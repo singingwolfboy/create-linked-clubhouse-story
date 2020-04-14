@@ -3666,7 +3666,7 @@ function addCommentToPullRequest(payload, comment) {
             body: comment,
         };
         const commentResponse = yield octokit.issues.createComment(params);
-        if (commentResponse.status !== 200) {
+        if (commentResponse.status !== 201) {
             core.setFailed(`HTTP ${commentResponse.status} octokit.issues.createComment(${JSON.stringify(params)})`);
             return false;
         }
@@ -3695,8 +3695,7 @@ function run() {
             return;
         }
         core.setOutput("story-id", story.id.toString());
-        const url = `https://app.clubhouse.io/nylas/story/${story.id}/`;
-        const comment = `Clubhouse story: ${url}`;
+        const comment = `Clubhouse story: ${story.app_url}`;
         yield addCommentToPullRequest(payload, comment);
     });
 }

@@ -209,7 +209,7 @@ async function addCommentToPullRequest(
     body: comment,
   };
   const commentResponse = await octokit.issues.createComment(params);
-  if (commentResponse.status !== 200) {
+  if (commentResponse.status !== 201) {
     core.setFailed(
       `HTTP ${
         commentResponse.status
@@ -243,8 +243,7 @@ async function run(): Promise<void> {
     return;
   }
   core.setOutput("story-id", story.id.toString());
-  const url = `https://app.clubhouse.io/nylas/story/${story.id}/`;
-  const comment = `Clubhouse story: ${url}`;
+  const comment = `Clubhouse story: ${story.app_url}`;
   await addCommentToPullRequest(payload, comment);
 }
 
