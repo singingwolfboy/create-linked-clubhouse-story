@@ -55,7 +55,7 @@ async function getClubhouseUserId(
     core.debug(`email to Clubhouse ID: ${stringFromMap(emailToClubhouseId)}`);
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members\n${err.message}`
     );
     return;
   }
@@ -100,7 +100,7 @@ async function getClubhouseProjectId(
     return projectNameToClubhouseId.get(projectName);
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects\n${err.message}`
     );
     return;
   }
@@ -134,7 +134,7 @@ async function createClubhouseStory(
     return storyResponse.result;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories\n${err.message}`
     );
     return null;
   }

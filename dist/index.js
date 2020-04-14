@@ -3556,7 +3556,7 @@ function getClubhouseUserId(githubUsername, http) {
             core.debug(`email to Clubhouse ID: ${stringFromMap(emailToClubhouseId)}`);
         }
         catch (err) {
-            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members`);
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members\n${err.message}`);
             return;
         }
         const octokit = new github_1.GitHub(GITHUB_TOKEN);
@@ -3589,7 +3589,7 @@ function getClubhouseProjectId(projectName, http) {
             return projectNameToClubhouseId.get(projectName);
         }
         catch (err) {
-            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects`);
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects\n${err.message}`);
             return;
         }
     });
@@ -3614,7 +3614,7 @@ function createClubhouseStory(payload, http) {
             return storyResponse.result;
         }
         catch (err) {
-            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories`);
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories\n${err.message}`);
             return null;
         }
     });
