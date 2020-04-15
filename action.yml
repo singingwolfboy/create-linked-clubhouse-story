@@ -13,6 +13,12 @@ inputs:
   project-name:
     description: The name of the Clubhouse.io project to create stories in
     required: true
+  comment-template:
+    description: >-
+      A Mustache template for the comment posted on a pull request, after the
+      Clubhouse story is successfully created. The template is populated
+      with a `story` variable.
+    default: "Clubhouse story: {{story.app_url}}"
   user-map:
     description: Map GitHub usernames to Clubhouse UUIDs
 outputs:

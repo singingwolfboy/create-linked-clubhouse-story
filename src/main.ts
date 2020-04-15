@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import { context } from "@actions/github";
 import { WebhookPayloadPullRequest } from "@octokit/webhooks";
 import { HttpClient } from "@actions/http-client";
+import Mustache from "mustache";
 import {
   CLUBHOUSE_STORY_URL_REGEXP,
   getClubhouseURLFromPullRequest,
@@ -32,7 +33,8 @@ async function run(): Promise<void> {
     return;
   }
   core.setOutput("story-id", story.id.toString());
-  const comment = `Clubhouse story: ${story.app_url}`;
+  const COMMENT_TEMPLATE = core.getInput("comment-template");
+  const comment = Mustache.render(COMMENT_TEMPLATE, { story });
   await addCommentToPullRequest(payload, comment);
 }
 
