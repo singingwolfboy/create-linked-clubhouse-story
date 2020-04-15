@@ -3623,7 +3623,7 @@ function createClubhouseStory(payload, http) {
             external_tickets: [
                 {
                     external_id: payload.pull_request.id.toString(),
-                    external_url: payload.pull_request.url,
+                    external_url: payload.pull_request.html_url,
                 },
             ],
         };

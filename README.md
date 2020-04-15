@@ -61,9 +61,11 @@ formatted string. Here's an example:
 ```
 
 The keys of this JSON object must be GitHub usernames, while the values
-must be Clubhouse UUIDs that identify users. Unfortunately, these UUIDs
+must be Clubhouse UUIDs that identify members. Unfortunately, these UUIDs
 are not exposed on the Clubhouse website; the best way to look them up is to
 [go to the User Directory for your Cluhouse workspace](https://app.clubhouse.io/settings/users),
 open the Developer Tools in your browser, find the API request for
 `https://app.clubhouse.io/backend/api/private/members`,
 and examine the API response to find the `id` for each user.
+Note that Clubhouse makes a distinction between a `User` and a `Member`:
+you need to look up the UUID for the `Member` object.
