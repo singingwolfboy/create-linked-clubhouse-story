@@ -3516,182 +3516,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// import { getInput, setOutput, setFailed, debug, error } from "@actions/core";
 const core = __importStar(__webpack_require__(470));
 const github_1 = __webpack_require__(469);
 const http_client_1 = __webpack_require__(539);
-const clubhouseURLRegex = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)\/[A-Za-z0-9-]*/;
-/**
- * Convert a Map to a sorted string representation. Useful for debugging.
- *
- * @param {Map} map - The input Map to convert to a string.
- * @returns {string} Sorted string representation.
- */
-function stringFromMap(map) {
-    return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
-}
-const GITHUB_TOKEN = core.getInput("github-token", { required: true });
-const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
-    required: true,
-});
-const PROJECT_NAME = core.getInput("project-name", { required: true });
-const USER_MAP_STRING = core.getInput("user-map");
-let USER_MAP = null;
-try {
-    if (USER_MAP_STRING) {
-        USER_MAP = JSON.parse(USER_MAP_STRING);
-    }
-}
-catch (err) {
-    core.warning("`user-map` is not valid JSON");
-}
-function getClubhouseUserId(githubUsername, http) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (USER_MAP && githubUsername in USER_MAP) {
-            return USER_MAP[githubUsername];
-        }
-        let emailToClubhouseId;
-        try {
-            const membersResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/members?token=${CLUBHOUSE_TOKEN}`);
-            const members = membersResponse.result;
-            if (!members) {
-                core.setFailed(`HTTP ${membersResponse.statusCode} https://api.clubhouse.io/api/v3/members`);
-                return;
-            }
-            emailToClubhouseId = members.reduce((e2id, member) => {
-                const email = member.profile.email_address;
-                const clubhouseId = member.id;
-                if (email) {
-                    e2id.set(email, clubhouseId);
-                }
-                return e2id;
-            }, new Map());
-            core.debug(`email to Clubhouse ID: ${stringFromMap(emailToClubhouseId)}`);
-        }
-        catch (err) {
-            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members\n${err.message}`);
-            return;
-        }
-        const octokit = new github_1.GitHub(GITHUB_TOKEN);
-        const userResponse = yield octokit.users.getByUsername({
-            username: githubUsername,
-        });
-        const user = userResponse.data;
-        if (user.email) {
-            return emailToClubhouseId.get(user.email);
-        }
-        else {
-            core.warning(`could not get email address for GitHub user @${githubUsername}`);
-        }
-    });
-}
-function getClubhouseProjectId(projectName, http) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const projectsResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/projects?token=${CLUBHOUSE_TOKEN}`);
-            const projects = projectsResponse.result;
-            if (!projects) {
-                core.setFailed(`HTTP ${projectsResponse.statusCode} https://api.clubhouse.io/api/v3/projects`);
-                return;
-            }
-            const projectNameToClubhouseId = projects.reduce((p2id, project) => {
-                p2id.set(project.name, project.id);
-                return p2id;
-            }, new Map());
-            core.debug(`Clubhouse project name to ID: ${stringFromMap(projectNameToClubhouseId)}`);
-            return projectNameToClubhouseId.get(projectName);
-        }
-        catch (err) {
-            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects\n${err.message}`);
-            return;
-        }
-    });
-}
-function createClubhouseStory(payload, http) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const githubUsername = payload.pull_request.user.login;
-        const clubhouseUserId = yield getClubhouseUserId(githubUsername, http);
-        const clubhouseProjectId = yield getClubhouseProjectId(PROJECT_NAME, http);
-        if (!clubhouseProjectId) {
-            core.setFailed(`Could not find Clubhouse ID for project: ${PROJECT_NAME}`);
-            return null;
-        }
-        const body = {
-            name: payload.pull_request.title,
-            description: payload.pull_request.body,
-            project_id: clubhouseProjectId,
-            external_tickets: [
-                {
-                    external_id: payload.pull_request.id.toString(),
-                    external_url: payload.pull_request.html_url,
-                },
-            ],
-        };
-        if (clubhouseUserId) {
-            body.owner_ids = [clubhouseUserId];
-        }
-        try {
-            const storyResponse = yield http.postJson(`https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`, body);
-            const story = storyResponse.result;
-            if (!story) {
-                core.setFailed(`HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}`);
-                return null;
-            }
-            return storyResponse.result;
-        }
-        catch (err) {
-            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}\n${err.message}`);
-            return null;
-        }
-    });
-}
-function getClubhouseURLFromPullRequest(payload) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // is there a clubhouse link in the description?
-        const results = payload.pull_request.body.match(clubhouseURLRegex);
-        if (results) {
-            return results[0];
-        }
-        // what about in the first page of comments?
-        const octokit = new github_1.GitHub(GITHUB_TOKEN);
-        const params = {
-            owner: payload.repository.owner.login,
-            repo: payload.repository.name,
-            issue_number: payload.pull_request.number,
-        };
-        const commentsResponse = yield octokit.issues.listComments(params);
-        if (commentsResponse.status === 200) {
-            const commentWithURL = commentsResponse.data.find((comment) => clubhouseURLRegex.test(comment.body));
-            if (commentWithURL) {
-                const match = commentWithURL.body.match(clubhouseURLRegex);
-                if (match) {
-                    return match[0];
-                }
-            }
-        }
-        else {
-            core.warning(`HTTP ${commentsResponse.status} octokit.issues.listComments(${JSON.stringify(params)})`);
-        }
-        return null;
-    });
-}
-function addCommentToPullRequest(payload, comment) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const octokit = new github_1.GitHub(GITHUB_TOKEN);
-        const params = {
-            owner: payload.repository.owner.login,
-            repo: payload.repository.name,
-            issue_number: payload.pull_request.number,
-            body: comment,
-        };
-        const commentResponse = yield octokit.issues.createComment(params);
-        if (commentResponse.status !== 201) {
-            core.setFailed(`HTTP ${commentResponse.status} octokit.issues.createComment(${JSON.stringify(params)})`);
-            return false;
-        }
-        return true;
-    });
-}
+const util_1 = __webpack_require__(345);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (github_1.context.eventName !== "pull_request") {
@@ -3699,9 +3527,9 @@ function run() {
             return;
         }
         const payload = github_1.context.payload;
-        const clubhouseURL = yield getClubhouseURLFromPullRequest(payload);
+        const clubhouseURL = yield util_1.getClubhouseURLFromPullRequest(payload);
         if (clubhouseURL) {
-            const match = clubhouseURL.match(clubhouseURLRegex);
+            const match = clubhouseURL.match(util_1.CLUBHOUSE_STORY_URL_REGEXP);
             if (match) {
                 const storyId = match[1];
                 core.setOutput("story-id", storyId);
@@ -3709,13 +3537,13 @@ function run() {
             return;
         }
         const http = new http_client_1.HttpClient();
-        const story = yield createClubhouseStory(payload, http);
+        const story = yield util_1.createClubhouseStory(payload, http);
         if (!story) {
             return;
         }
         core.setOutput("story-id", story.id.toString());
         const comment = `Clubhouse story: ${story.app_url}`;
-        yield addCommentToPullRequest(payload, comment);
+        yield util_1.addCommentToPullRequest(payload, comment);
     });
 }
 run();
@@ -4440,6 +4268,226 @@ function hasLastPage (link) {
   deprecate(`octokit.hasLastPage() – You can use octokit.paginate or async iterators instead: https://github.com/octokit/rest.js#pagination.`)
   return getPageLinks(link).last
 }
+
+
+/***/ }),
+
+/***/ 345:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const github_1 = __webpack_require__(469);
+exports.CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
+/**
+ * Convert a Map to a sorted string representation. Useful for debugging.
+ *
+ * @param {Map} map - The input Map to convert to a string.
+ * @returns {string} Sorted string representation.
+ */
+function stringFromMap(map) {
+    return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
+}
+function getClubhouseUserId(githubUsername, http) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const USER_MAP_STRING = core.getInput("user-map");
+        if (USER_MAP_STRING) {
+            try {
+                const USER_MAP = JSON.parse(USER_MAP_STRING);
+                if (githubUsername in USER_MAP) {
+                    return USER_MAP[githubUsername];
+                }
+            }
+            catch (err) {
+                core.warning("`user-map` is not valid JSON");
+            }
+        }
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        let emailToClubhouseId;
+        try {
+            const membersResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/members?token=${CLUBHOUSE_TOKEN}`);
+            const members = membersResponse.result;
+            if (!members) {
+                core.setFailed(`HTTP ${membersResponse.statusCode} https://api.clubhouse.io/api/v3/members`);
+                return;
+            }
+            emailToClubhouseId = members.reduce((e2id, member) => {
+                const email = member.profile.email_address;
+                const clubhouseId = member.id;
+                if (email) {
+                    e2id.set(email, clubhouseId);
+                }
+                return e2id;
+            }, new Map());
+            core.debug(`email to Clubhouse ID: ${stringFromMap(emailToClubhouseId)}`);
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members\n${err.message}`);
+            return;
+        }
+        const GITHUB_TOKEN = core.getInput("github-token", {
+            required: true,
+        });
+        const octokit = new github_1.GitHub(GITHUB_TOKEN);
+        const userResponse = yield octokit.users.getByUsername({
+            username: githubUsername,
+        });
+        const user = userResponse.data;
+        if (user.email) {
+            return emailToClubhouseId.get(user.email);
+        }
+        else {
+            core.warning(`could not get email address for GitHub user @${githubUsername}`);
+        }
+    });
+}
+exports.getClubhouseUserId = getClubhouseUserId;
+function getClubhouseProjectId(projectName, http) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        try {
+            const projectsResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/projects?token=${CLUBHOUSE_TOKEN}`);
+            const projects = projectsResponse.result;
+            if (!projects) {
+                core.setFailed(`HTTP ${projectsResponse.statusCode} https://api.clubhouse.io/api/v3/projects`);
+                return;
+            }
+            const projectNameToClubhouseId = projects.reduce((p2id, project) => {
+                p2id.set(project.name, project.id);
+                return p2id;
+            }, new Map());
+            core.debug(`Clubhouse project name to ID: ${stringFromMap(projectNameToClubhouseId)}`);
+            return projectNameToClubhouseId.get(projectName);
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects\n${err.message}`);
+            return;
+        }
+    });
+}
+exports.getClubhouseProjectId = getClubhouseProjectId;
+function createClubhouseStory(payload, http) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        const PROJECT_NAME = core.getInput("project-name", {
+            required: true,
+        });
+        const githubUsername = payload.pull_request.user.login;
+        const clubhouseUserId = yield getClubhouseUserId(githubUsername, http);
+        const clubhouseProjectId = yield getClubhouseProjectId(PROJECT_NAME, http);
+        if (!clubhouseProjectId) {
+            core.setFailed(`Could not find Clubhouse ID for project: ${PROJECT_NAME}`);
+            return null;
+        }
+        const body = {
+            name: payload.pull_request.title,
+            description: payload.pull_request.body,
+            project_id: clubhouseProjectId,
+            external_tickets: [
+                {
+                    external_id: payload.pull_request.id.toString(),
+                    external_url: payload.pull_request.html_url,
+                },
+            ],
+        };
+        if (clubhouseUserId) {
+            body.owner_ids = [clubhouseUserId];
+        }
+        try {
+            const storyResponse = yield http.postJson(`https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`, body);
+            const story = storyResponse.result;
+            if (!story) {
+                core.setFailed(`HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}`);
+                return null;
+            }
+            return storyResponse.result;
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}\n${err.message}`);
+            return null;
+        }
+    });
+}
+exports.createClubhouseStory = createClubhouseStory;
+function getClubhouseURLFromPullRequest(payload) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const GITHUB_TOKEN = core.getInput("github-token", {
+            required: true,
+        });
+        // is there a clubhouse link in the description?
+        const results = payload.pull_request.body.match(exports.CLUBHOUSE_STORY_URL_REGEXP);
+        if (results) {
+            return results[0];
+        }
+        // what about in the first page of comments?
+        const octokit = new github_1.GitHub(GITHUB_TOKEN);
+        const params = {
+            owner: payload.repository.owner.login,
+            repo: payload.repository.name,
+            issue_number: payload.pull_request.number,
+        };
+        const commentsResponse = yield octokit.issues.listComments(params);
+        if (commentsResponse.status === 200) {
+            const commentWithURL = commentsResponse.data.find((comment) => exports.CLUBHOUSE_STORY_URL_REGEXP.test(comment.body));
+            if (commentWithURL) {
+                const match = commentWithURL.body.match(exports.CLUBHOUSE_STORY_URL_REGEXP);
+                if (match) {
+                    return match[0];
+                }
+            }
+        }
+        else {
+            core.warning(`HTTP ${commentsResponse.status} octokit.issues.listComments(${JSON.stringify(params)})`);
+        }
+        return null;
+    });
+}
+exports.getClubhouseURLFromPullRequest = getClubhouseURLFromPullRequest;
+function addCommentToPullRequest(payload, comment) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const GITHUB_TOKEN = core.getInput("github-token", {
+            required: true,
+        });
+        const octokit = new github_1.GitHub(GITHUB_TOKEN);
+        const params = {
+            owner: payload.repository.owner.login,
+            repo: payload.repository.name,
+            issue_number: payload.pull_request.number,
+            body: comment,
+        };
+        const commentResponse = yield octokit.issues.createComment(params);
+        if (commentResponse.status !== 201) {
+            core.setFailed(`HTTP ${commentResponse.status} octokit.issues.createComment(${JSON.stringify(params)})`);
+            return false;
+        }
+        return true;
+    });
+}
+exports.addCommentToPullRequest = addCommentToPullRequest;
 
 
 /***/ }),
