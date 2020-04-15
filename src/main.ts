@@ -26,16 +26,29 @@ function stringFromMap(map: Map<Stringable, Stringable>): string {
   return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
 
-const GITHUB_TOKEN: string = core.getInput("github-token", { required: true });
-const CLUBHOUSE_TOKEN: string = core.getInput("clubhouse-token", {
+const GITHUB_TOKEN = core.getInput("github-token", { required: true });
+const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
   required: true,
 });
-const PROJECT_NAME: string = core.getInput("project-name", { required: true });
+const PROJECT_NAME = core.getInput("project-name", { required: true });
+const USER_MAP_STRING = core.getInput("user-map");
+let USER_MAP: Record<string, string> | null = null;
+try {
+  if (USER_MAP_STRING) {
+    USER_MAP = JSON.parse(USER_MAP_STRING);
+  }
+} catch (err) {
+  core.warning("`user-map` is not valid JSON");
+}
 
 async function getClubhouseUserId(
   githubUsername: string,
   http: HttpClient
 ): Promise<string | undefined> {
+  if (USER_MAP && githubUsername in USER_MAP) {
+    return USER_MAP[githubUsername];
+  }
+
   let emailToClubhouseId;
 
   try {

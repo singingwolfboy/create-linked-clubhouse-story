@@ -3535,8 +3535,21 @@ const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
     required: true,
 });
 const PROJECT_NAME = core.getInput("project-name", { required: true });
+const USER_MAP_STRING = core.getInput("user-map");
+let USER_MAP = null;
+try {
+    if (USER_MAP_STRING) {
+        USER_MAP = JSON.parse(USER_MAP_STRING);
+    }
+}
+catch (err) {
+    core.warning("`user-map` is not valid JSON");
+}
 function getClubhouseUserId(githubUsername, http) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (USER_MAP && githubUsername in USER_MAP) {
+            return USER_MAP[githubUsername];
+        }
         let emailToClubhouseId;
         try {
             const membersResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/members?token=${CLUBHOUSE_TOKEN}`);

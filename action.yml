@@ -12,6 +12,8 @@ inputs:
   project-name:
     description: "The name of the Clubhouse.io project to create stories in"
     required: true
+  user-map:
+    description: "Map GitHub usernames to Clubhouse UUIDs"
 outputs:
   story-id:
     description: "The ID of the associated story on Clubhouse"
