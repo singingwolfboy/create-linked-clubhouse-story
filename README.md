@@ -23,7 +23,7 @@ jobs:
   clubhouse-create:
     runs-on: ubuntu-latest
     steps:
-      - uses: singingwolfboy/create-linked-clubhouse-story@master
+      - uses: singingwolfboy/create-linked-clubhouse-story@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -48,7 +48,7 @@ map GitHub users to Clubhouse users. The user map should be passed in the
 formatted string. Here's an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@master
+- uses: singingwolfboy/create-linked-clubhouse-story@v1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
