@@ -1,5 +1,5 @@
 name: Create Linked Clubhouse Story
-author: David Baumgold
+author: David Baumgold <david@davidbaumgold.com>
 description: >-
   When a pull request is opened, create a linked story on Clubhouse
   if the description does not already link to one.
