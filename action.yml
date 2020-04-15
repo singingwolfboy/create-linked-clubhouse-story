@@ -1,22 +1,26 @@
-name: "Create Linked Clubhouse Story"
+name: Create Linked Clubhouse Story
+author: David Baumgold
 description: >-
   When a pull request is opened, create a linked story on Clubhouse
   if the description does not already link to one.
 inputs:
   github-token:
-    description: "API token for GitHub. Can be passed in using {{ secrets.GITHUB_TOKEN }}"
+    description: API token for GitHub. Can be passed in using {{ secrets.GITHUB_TOKEN }}
     required: true
   clubhouse-token:
-    description: "API token for Clubhouse.io"
+    description: API token for Clubhouse.io
     required: true
   project-name:
-    description: "The name of the Clubhouse.io project to create stories in"
+    description: The name of the Clubhouse.io project to create stories in
     required: true
   user-map:
-    description: "Map GitHub usernames to Clubhouse UUIDs"
+    description: Map GitHub usernames to Clubhouse UUIDs
 outputs:
   story-id:
-    description: "The ID of the associated story on Clubhouse"
+    description: The ID of the associated story on Clubhouse
 runs:
-  using: "node12"
-  main: "dist/index.js"
+  using: node12
+  main: dist/index.js
+branding:
+  icon: git-pull-request
+  color: blue
