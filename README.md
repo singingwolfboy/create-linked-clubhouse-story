@@ -9,7 +9,7 @@ a Clubhouse story in the description.
 
 [Create a Clubhouse API token](https://app.clubhouse.io/settings/account/api-tokens),
 and store it as an encrypted secret in your GitHub repository settings.
-[Check the GitHub documentation for how to create an encrypted secret.](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets).
+[Check the GitHub documentation for how to create an encrypted secret.](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets)
 Name this secret `CLUBHOUSE_TOKEN`.
 
 Create a file named `clubhouse-create.yml` in the `.github/workflows` directory of your repository. Put in the following content:
