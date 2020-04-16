@@ -23,7 +23,7 @@ jobs:
   clubhouse-create:
     runs-on: ubuntu-latest
     steps:
-      - uses: singingwolfboy/create-linked-clubhouse-story@v1
+      - uses: singingwolfboy/create-linked-clubhouse-story@v1.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -32,6 +32,44 @@ jobs:
 
 The `project-name` variable should contain the name of the Clubhouse project
 that you want the Clubhouse story to be associated with.
+
+## Disabled for Built-In Integration
+
+[Clubhouse already has an integration with GitHub.](https://help.clubhouse.io/hc/en-us/articles/207540323-Using-The-Clubhouse-GitHub-Integration)
+It works for the opposite use-case, assuming that the Clubhouse story exists
+_before_ the pull request is created.
+
+This Action will specifically check for branch names that follow the naming
+convention for this built-in integration. Any branch name that looks like
+`*/ch####/*` will be ignored by this Action, on the assumption that a Clubhouse
+story already exists for the pull request.
+
+## Customizing the Pull Request Comment
+
+You can customize the comment posted on pull requests using the `comment-template`
+variable, like this:
+
+```yaml
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.1
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
+    project-name: Engineering
+    comment-template: >-
+      Thanks for the pull request! [I've created a Clubhouse story
+      for you.]({{{ story.app_url }}})
+```
+
+This comment template is processed using the [Mustache](https://mustache.github.io/)
+templating system. It receives [the Story object returned from the Clubhouse API](https://clubhouse.io/api/rest/v3/#Story). Note that you may want to use the
+triple mustache syntax to disable HTML escaping.
+
+GitHub will automatically process the comment text as [Markdown](https://guides.github.com/features/mastering-markdown/),
+so you can use features like links and images if you make your comment
+template output valid Markdown, as shown above.
+
+If you don't provide a comment template, this action will use this comment template
+by default: `Clubhouse story: {{{ story.app_url }}}`
 
 ## User Map
 
@@ -48,7 +86,7 @@ map GitHub users to Clubhouse users. The user map should be passed in the
 formatted string. Here's an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
