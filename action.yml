@@ -18,7 +18,7 @@ inputs:
       A Mustache template for the comment posted on a pull request, after the
       Clubhouse story is successfully created. The template is populated
       with a `story` variable.
-    default: "Clubhouse story: {{story.app_url}}"
+    default: "Clubhouse story: {{{ story.app_url }}}"
   user-map:
     description: Map GitHub usernames to Clubhouse UUIDs
 outputs:
