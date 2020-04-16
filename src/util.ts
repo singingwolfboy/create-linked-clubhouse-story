@@ -10,6 +10,7 @@ import {
 } from "./types";
 
 export const CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
+export const CLUBHOUSE_BRANCH_NAME_REGEXP = /[A-Za-z-]+\/ch(\d+)\/[A-Za-z-]/;
 
 interface Stringable {
   toString(): string;
@@ -186,6 +187,16 @@ export async function createClubhouseStory(
     );
     return null;
   }
+}
+
+export function getClubhouseStoryIdFromBranchName(
+  branchName: string
+): string | null {
+  const match = branchName.match(CLUBHOUSE_BRANCH_NAME_REGEXP);
+  if (match) {
+    return match[1];
+  }
+  return null;
 }
 
 export async function getClubhouseURLFromPullRequest(

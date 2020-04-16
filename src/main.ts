@@ -8,6 +8,7 @@ import {
   getClubhouseURLFromPullRequest,
   createClubhouseStory,
   addCommentToPullRequest,
+  getClubhouseStoryIdFromBranchName,
 } from "./util";
 
 async function run(): Promise<void> {
@@ -17,11 +18,19 @@ async function run(): Promise<void> {
   }
 
   const payload = context.payload as WebhookPayloadPullRequest;
+  const branchName = payload.pull_request.head.ref;
+  let storyId = getClubhouseStoryIdFromBranchName(branchName);
+  if (storyId) {
+    core.debug(`found story ID ${storyId} in branch ${branchName}`);
+    core.setOutput("story-id", storyId);
+    return;
+  }
+
   const clubhouseURL = await getClubhouseURLFromPullRequest(payload);
   if (clubhouseURL) {
     const match = clubhouseURL.match(CLUBHOUSE_STORY_URL_REGEXP);
     if (match) {
-      const storyId = match[1];
+      storyId = match[1];
       core.setOutput("story-id", storyId);
     }
     return;

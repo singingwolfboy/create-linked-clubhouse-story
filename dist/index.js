@@ -4277,11 +4277,18 @@ function run() {
             return;
         }
         const payload = github_1.context.payload;
+        const branchName = payload.pull_request.head.ref;
+        let storyId = util_1.getClubhouseStoryIdFromBranchName(branchName);
+        if (storyId) {
+            core.debug(`found story ID ${storyId} in branch ${branchName}`);
+            core.setOutput("story-id", storyId);
+            return;
+        }
         const clubhouseURL = yield util_1.getClubhouseURLFromPullRequest(payload);
         if (clubhouseURL) {
             const match = clubhouseURL.match(util_1.CLUBHOUSE_STORY_URL_REGEXP);
             if (match) {
-                const storyId = match[1];
+                storyId = match[1];
                 core.setOutput("story-id", storyId);
             }
             return;
@@ -5048,6 +5055,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const github_1 = __webpack_require__(469);
 exports.CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
+exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /[A-Za-z-]+\/ch(\d+)\/[A-Za-z-]/;
 /**
  * Convert a Map to a sorted string representation. Useful for debugging.
  *
@@ -5184,6 +5192,14 @@ function createClubhouseStory(payload, http) {
     });
 }
 exports.createClubhouseStory = createClubhouseStory;
+function getClubhouseStoryIdFromBranchName(branchName) {
+    const match = branchName.match(exports.CLUBHOUSE_BRANCH_NAME_REGEXP);
+    if (match) {
+        return match[1];
+    }
+    return null;
+}
+exports.getClubhouseStoryIdFromBranchName = getClubhouseStoryIdFromBranchName;
 function getClubhouseURLFromPullRequest(payload) {
     return __awaiter(this, void 0, void 0, function* () {
         const GITHUB_TOKEN = core.getInput("github-token", {
