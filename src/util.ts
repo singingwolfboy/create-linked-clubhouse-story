@@ -7,6 +7,9 @@ import {
   ClubhouseProject,
   ClubhouseStory,
   ClubhouseCreateStoryBody,
+  ClubhouseUpdateStoryBody,
+  ClubhouseWorkflow,
+  ClubhouseTeam,
 } from "./types";
 
 export const CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
@@ -90,6 +93,32 @@ export async function getClubhouseUserId(
     core.warning(
       `could not get email address for GitHub user @${githubUsername}`
     );
+  }
+}
+
+export async function getClubhouseStoryById(
+  id: number | string,
+  http: HttpClient
+): Promise<ClubhouseStory | null> {
+  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+    required: true,
+  });
+  try {
+    const storyResponse = await http.getJson<ClubhouseStory>(
+      `https://api.clubhouse.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`
+    );
+    const story = storyResponse.result;
+    if (!story) {
+      core.setFailed(
+        `HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories/${id}`
+      );
+    }
+    return story;
+  } catch (err) {
+    core.setFailed(
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories/${id}\n${err.message}`
+    );
+    return null;
   }
 }
 
@@ -266,4 +295,84 @@ export async function addCommentToPullRequest(
     return false;
   }
   return true;
+}
+
+export async function getClubhouseWorkflowForStory(
+  story: ClubhouseStory,
+  http: HttpClient
+): Promise<ClubhouseWorkflow | null> {
+  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+    required: true,
+  });
+  const projectId = story.project_id;
+  try {
+    // get project
+    const projectResponse = await http.getJson<ClubhouseProject>(
+      `https://api.clubhouse.io/api/v3/projects/${projectId}?token=${CLUBHOUSE_TOKEN}`
+    );
+
+    const project = projectResponse.result;
+    if (!project) {
+      core.setFailed(
+        `HTTP ${projectResponse.statusCode} https://api.clubhouse.io/api/v3/projects/${projectId}`
+      );
+      return null;
+    }
+    const teamId = project.team_id;
+
+    try {
+      // get team
+      const teamResponse = await http.getJson<ClubhouseTeam>(
+        `https://api.clubhouse.io/api/v3/team/${teamId}?token=${CLUBHOUSE_TOKEN}`
+      );
+
+      const team = teamResponse.result;
+      if (!team) {
+        core.setFailed(
+          `HTTP ${teamResponse.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}`
+        );
+        return null;
+      }
+
+      return team.workflow;
+    } catch (err) {
+      core.setFailed(
+        `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}\n${err.message}`
+      );
+      return null;
+    }
+  } catch (err) {
+    core.setFailed(
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects/${projectId}\n${err.message}`
+    );
+    return null;
+  }
+}
+
+export async function updateClubhouseStoryById(
+  id: number | string,
+  http: HttpClient,
+  body: ClubhouseUpdateStoryBody
+): Promise<ClubhouseStory | null> {
+  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+    required: true,
+  });
+  try {
+    const storyResponse = await http.putJson<ClubhouseStory>(
+      `https://api.clubhouse.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`,
+      body
+    );
+    const story = storyResponse.result;
+    if (!story) {
+      core.setFailed(
+        `HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories/${id}`
+      );
+    }
+    return story;
+  } catch (err) {
+    core.setFailed(
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories/${id}\n${err.message}`
+    );
+    return null;
+  }
 }

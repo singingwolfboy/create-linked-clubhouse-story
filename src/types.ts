@@ -62,6 +62,50 @@ export interface ClubhouseProject {
   updated_at: string | null;
 }
 
+/** Group of Projects with the same Workflow. */
+export interface ClubhouseTeam {
+  entity_type: "team";
+  created_at: string;
+  description: string;
+  id: number;
+  name: string;
+  position: number;
+  project_ids: number[];
+  updated_at: string;
+  workflow: ClubhouseWorkflow;
+}
+
+/** Details of the workflow associated with the Team. */
+export interface ClubhouseWorkflow {
+  entity_type: "workflow";
+  auto_assign_owner: boolean;
+  created_at: string;
+  default_state_id: number;
+  description: string;
+  id: number;
+  name: string;
+  project_ids: number[];
+  states: ClubhouseWorkflowState[];
+  team_id: number;
+  updated_at: string;
+}
+
+/** Workflow State is any of the at least 3 columns. Workflow States correspond to one of 3 types: Unstarted, Started, or Done. */
+export interface ClubhouseWorkflowState {
+  entity_type: "workflow-state";
+  color: string;
+  created_at: string;
+  description: string;
+  id: number;
+  name: string;
+  num_stories: number;
+  num_story_templates: number;
+  position: number;
+  type: "unstarted" | "started" | "done";
+  updated_at: string;
+  verb: string | null;
+}
+
 /** Branch refers to a GitHub branch. Branches are feature branches associated with Clubhouse Stories. */
 export interface ClubhouseBranch {
   entity_type: "branch";
@@ -357,5 +401,31 @@ export interface ClubhouseCreateStoryBody {
   story_type?: "bug" | "chore" | "feature";
   tasks?: ClubhouseCreateTaskParams[];
   updated_at?: string;
+  workflow_state_id?: number;
+}
+
+/** Update Story can be used to update Story properties. */
+export interface ClubhouseUpdateStoryBody {
+  after_id?: number;
+  archived?: boolean;
+  before_id?: number;
+  branch_ids?: number[];
+  commit_ids?: number[];
+  completed_at_override?: string | null;
+  deadline?: string | null;
+  description?: string;
+  epic_id?: number | null;
+  file_ids?: number[];
+  follower_ids?: string[];
+  iteration_id?: number | null;
+  labels?: ClubhouseCreateLabelParams[];
+  linked_file_ids?: number[];
+  name?: string;
+  owner_ids?: string[];
+  project_id?: number;
+  pull_request_ids?: number[];
+  requested_by_id?: string;
+  started_at_override?: string | null;
+  story_type?: "bug" | "chore" | "feature";
   workflow_state_id?: number;
 }

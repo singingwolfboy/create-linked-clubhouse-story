@@ -13,6 +13,14 @@ inputs:
   project-name:
     description: The name of the Clubhouse.io project to create stories in
     required: true
+  opened-state-name:
+    description: The name of the workflow state for Clubhouse stories when a pull request is created.
+  closed-state-name:
+    description: The name of the workflow state for Clubhouse stories when a pull request is closed.
+    required: true
+  merged-state-name:
+    description: The name of the workflow state for Clubhouse stories when a pull request is closed.
+    required: true
   comment-template:
     description: >-
       A Mustache template for the comment posted on a pull request, after the

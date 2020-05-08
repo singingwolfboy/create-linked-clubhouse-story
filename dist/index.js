@@ -1990,6 +1990,89 @@ module.exports = require("os");
 
 /***/ }),
 
+/***/ 104:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const github_1 = __webpack_require__(469);
+const http_client_1 = __webpack_require__(539);
+const util_1 = __webpack_require__(345);
+function closed() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const payload = github_1.context.payload;
+        const branchName = payload.pull_request.head.ref;
+        let storyId = util_1.getClubhouseStoryIdFromBranchName(branchName);
+        if (storyId) {
+            core.debug(`found story ID ${storyId} in branch ${branchName}`);
+            core.setOutput("story-id", storyId);
+            return;
+        }
+        const clubhouseURL = yield util_1.getClubhouseURLFromPullRequest(payload);
+        if (!clubhouseURL) {
+            core.setFailed("Clubhouse URL not found!");
+            return;
+        }
+        const match = clubhouseURL.match(util_1.CLUBHOUSE_STORY_URL_REGEXP);
+        if (match) {
+            storyId = match[1];
+            core.setOutput("story-id", storyId);
+        }
+        else {
+            core.debug(`invalid Clubhouse URL: ${clubhouseURL}`);
+            return;
+        }
+        const http = new http_client_1.HttpClient();
+        const story = yield util_1.getClubhouseStoryById(storyId, http);
+        if (!story) {
+            core.setFailed(`Could not get Clubhouse story ${storyId}`);
+            return;
+        }
+        const workflow = yield util_1.getClubhouseWorkflowForStory(story, http);
+        if (!workflow) {
+            core.setFailed(`Could not get Clubhouse workflow for story ${storyId}`);
+            return;
+        }
+        const stateName = payload.pull_request.merged
+            ? core.getInput("merged-state-name")
+            : core.getInput("closed-state-name");
+        const workflowState = workflow.states.find((state) => state.name === stateName);
+        if (!workflowState) {
+            core.setFailed(`Could not find Clubhouse workflow state named ${stateName}`);
+            return;
+        }
+        const updatedStory = yield util_1.updateClubhouseStoryById(storyId, http, {
+            workflow_state_id: workflowState.id,
+        });
+        if (!updatedStory) {
+            core.setFailed(`Could not update Clubhouse story ${storyId} to workflow state ${workflowState.id}`);
+            return;
+        }
+    });
+}
+exports.default = closed;
+
+
+/***/ }),
+
 /***/ 118:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -4267,9 +4350,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const github_1 = __webpack_require__(469);
-const http_client_1 = __webpack_require__(539);
-const mustache_1 = __importDefault(__webpack_require__(174));
-const util_1 = __webpack_require__(345);
+const opened_1 = __importDefault(__webpack_require__(802));
+const closed_1 = __importDefault(__webpack_require__(104));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (github_1.context.eventName !== "pull_request") {
@@ -4277,31 +4359,15 @@ function run() {
             return;
         }
         const payload = github_1.context.payload;
-        const branchName = payload.pull_request.head.ref;
-        let storyId = util_1.getClubhouseStoryIdFromBranchName(branchName);
-        if (storyId) {
-            core.debug(`found story ID ${storyId} in branch ${branchName}`);
-            core.setOutput("story-id", storyId);
-            return;
+        switch (payload.action) {
+            case "opened":
+                return opened_1.default();
+            case "closed":
+                return closed_1.default();
+            default:
+                core.setFailed("This action only works with the `opened` and `closed` actions for `pull_request` events");
+                return;
         }
-        const clubhouseURL = yield util_1.getClubhouseURLFromPullRequest(payload);
-        if (clubhouseURL) {
-            const match = clubhouseURL.match(util_1.CLUBHOUSE_STORY_URL_REGEXP);
-            if (match) {
-                storyId = match[1];
-                core.setOutput("story-id", storyId);
-            }
-            return;
-        }
-        const http = new http_client_1.HttpClient();
-        const story = yield util_1.createClubhouseStory(payload, http);
-        if (!story) {
-            return;
-        }
-        core.setOutput("story-id", story.id.toString());
-        const COMMENT_TEMPLATE = core.getInput("comment-template");
-        const comment = mustache_1.default.render(COMMENT_TEMPLATE, { story });
-        yield util_1.addCommentToPullRequest(payload, comment);
     });
 }
 run();
@@ -5121,6 +5187,26 @@ function getClubhouseUserId(githubUsername, http) {
     });
 }
 exports.getClubhouseUserId = getClubhouseUserId;
+function getClubhouseStoryById(id, http) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        try {
+            const storyResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`);
+            const story = storyResponse.result;
+            if (!story) {
+                core.setFailed(`HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories/${id}`);
+            }
+            return story;
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories/${id}\n${err.message}`);
+            return null;
+        }
+    });
+}
+exports.getClubhouseStoryById = getClubhouseStoryById;
 function getClubhouseProjectId(projectName, http) {
     return __awaiter(this, void 0, void 0, function* () {
         const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
@@ -5255,6 +5341,63 @@ function addCommentToPullRequest(payload, comment) {
     });
 }
 exports.addCommentToPullRequest = addCommentToPullRequest;
+function getClubhouseWorkflowForStory(story, http) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        const projectId = story.project_id;
+        try {
+            // get project
+            const projectResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/projects/${projectId}?token=${CLUBHOUSE_TOKEN}`);
+            const project = projectResponse.result;
+            if (!project) {
+                core.setFailed(`HTTP ${projectResponse.statusCode} https://api.clubhouse.io/api/v3/projects/${projectId}`);
+                return null;
+            }
+            const teamId = project.team_id;
+            try {
+                // get team
+                const teamResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/team/${teamId}?token=${CLUBHOUSE_TOKEN}`);
+                const team = teamResponse.result;
+                if (!team) {
+                    core.setFailed(`HTTP ${teamResponse.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}`);
+                    return null;
+                }
+                return team.workflow;
+            }
+            catch (err) {
+                core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}\n${err.message}`);
+                return null;
+            }
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects/${projectId}\n${err.message}`);
+            return null;
+        }
+    });
+}
+exports.getClubhouseWorkflowForStory = getClubhouseWorkflowForStory;
+function updateClubhouseStoryById(id, http, body) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        try {
+            const storyResponse = yield http.putJson(`https://api.clubhouse.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`, body);
+            const story = storyResponse.result;
+            if (!story) {
+                core.setFailed(`HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories/${id}`);
+            }
+            return story;
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories/${id}\n${err.message}`);
+            return null;
+        }
+    });
+}
+exports.updateClubhouseStoryById = updateClubhouseStoryById;
 
 
 /***/ }),
@@ -10133,6 +10276,71 @@ function getUserAgent() {
 
 exports.getUserAgent = getUserAgent;
 //# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
+/***/ 802:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const github_1 = __webpack_require__(469);
+const http_client_1 = __webpack_require__(539);
+const mustache_1 = __importDefault(__webpack_require__(174));
+const util_1 = __webpack_require__(345);
+function opened() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const payload = github_1.context.payload;
+        const branchName = payload.pull_request.head.ref;
+        let storyId = util_1.getClubhouseStoryIdFromBranchName(branchName);
+        if (storyId) {
+            core.debug(`found story ID ${storyId} in branch ${branchName}`);
+            core.setOutput("story-id", storyId);
+            return;
+        }
+        const clubhouseURL = yield util_1.getClubhouseURLFromPullRequest(payload);
+        if (clubhouseURL) {
+            const match = clubhouseURL.match(util_1.CLUBHOUSE_STORY_URL_REGEXP);
+            if (match) {
+                storyId = match[1];
+                core.setOutput("story-id", storyId);
+            }
+            return;
+        }
+        const http = new http_client_1.HttpClient();
+        const story = yield util_1.createClubhouseStory(payload, http);
+        if (!story) {
+            return;
+        }
+        core.setOutput("story-id", story.id.toString());
+        const COMMENT_TEMPLATE = core.getInput("comment-template");
+        const comment = mustache_1.default.render(COMMENT_TEMPLATE, { story });
+        yield util_1.addCommentToPullRequest(payload, comment);
+    });
+}
+exports.default = opened;
 
 
 /***/ }),

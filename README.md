@@ -12,15 +12,15 @@ and store it as an encrypted secret in your GitHub repository settings.
 [Check the GitHub documentation for how to create an encrypted secret.](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets)
 Name this secret `CLUBHOUSE_TOKEN`.
 
-Create a file named `clubhouse-create.yml` in the `.github/workflows` directory of your repository. Put in the following content:
+Create a file named `clubhouse.yml` in the `.github/workflows` directory of your repository. Put in the following content:
 
 ```yaml
 on:
   pull_request:
-    types: [opened]
+    types: [opened, closed]
 
 jobs:
-  clubhouse-create:
+  clubhouse:
     runs-on: ubuntu-latest
     steps:
       - uses: singingwolfboy/create-linked-clubhouse-story@v1.1
@@ -28,10 +28,16 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
           project-name: Engineering
+          opened-state-name: Started
+          merged-state-name: Done
+          closed-state-name: Abandoned
 ```
 
 The `project-name` variable should contain the name of the Clubhouse project
-that you want the Clubhouse story to be associated with.
+that you want the Clubhouse story to be associated with. The
+`opened-state-name`, `merged-state-name`, and `closed-state-name` variables
+should contain the name of the state that you want the Clubhouse story to
+be in when the pull request is opened, merged, and closed, respectively.
 
 ## Disabled for Built-In Integration
 
@@ -55,6 +61,9 @@ variable, like this:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
     project-name: Engineering
+    opened-state-name: Started
+    merged-state-name: Done
+    closed-state-name: Abandoned
     comment-template: >-
       Thanks for the pull request! [I've created a Clubhouse story
       for you.]({{{ story.app_url }}})
