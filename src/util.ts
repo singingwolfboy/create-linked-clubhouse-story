@@ -182,7 +182,7 @@ export async function getClubhouseWorkflowState(
 
   try {
     const teamResponse = await http.getJson<ClubhouseTeam>(
-      `https://api.clubhouse.io/api/v3/team/${teamId}?token=${CLUBHOUSE_TOKEN}`
+      `https://api.clubhouse.io/api/v3/teams/${teamId}?token=${CLUBHOUSE_TOKEN}`
     );
 
     const team = teamResponse.result;
