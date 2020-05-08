@@ -64,6 +64,36 @@ test("getClubhouseProjectByName", async () => {
   scope.done();
 });
 
+test("getClubhouseWorkflowState", async () => {
+  const scope = nock("https://api.clubhouse.io")
+    .get("/api/v3/teams/123")
+    .query(true)
+    .reply(200, {
+      id: 123,
+      name: "fake-team",
+      workflow: {
+        name: "fake-workflow",
+        states: [
+          { name: "Plan", type: "unstarted" },
+          { name: "Execute", type: "started" },
+          { name: "Finished", type: "done" },
+          { name: "Aborted", type: "done" },
+        ],
+      },
+    });
+
+  const http = new HttpClient();
+  const project = { name: "fake-team", team_id: 123 };
+  const workflowState = await util.getClubhouseWorkflowState(
+    "Finished",
+    http,
+    project as any
+  );
+  expect(workflowState).toEqual({ name: "Finished", type: "done" });
+
+  scope.done();
+});
+
 test("getClubhouseURLFromPullRequest", async () => {
   const payload = {
     pull_request: {

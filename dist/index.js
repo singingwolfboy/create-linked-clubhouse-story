@@ -5247,7 +5247,7 @@ function getClubhouseWorkflowState(stateName, http, project) {
         });
         const teamId = project.team_id;
         try {
-            const teamResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/team/${teamId}?token=${CLUBHOUSE_TOKEN}`);
+            const teamResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/teams/${teamId}?token=${CLUBHOUSE_TOKEN}`);
             const team = teamResponse.result;
             if (!team) {
                 core.setFailed(`HTTP ${teamResponse.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}`);
