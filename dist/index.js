@@ -2046,26 +2046,22 @@ function closed() {
             core.setFailed(`Could not get Clubhouse story ${storyId}`);
             return;
         }
-        const workflow = yield util_1.getClubhouseWorkflowForStory(story, http);
-        if (!workflow) {
-            core.setFailed(`Could not get Clubhouse workflow for story ${storyId}`);
+        const project = yield util_1.getClubhouseProject(story.project_id, http);
+        if (!project) {
+            core.setFailed(`Could not get Clubhouse project ${story.project_id}`);
             return;
         }
         const stateName = payload.pull_request.merged
             ? core.getInput("merged-state-name")
             : core.getInput("closed-state-name");
-        const workflowState = workflow.states.find((state) => state.name === stateName);
+        const workflowState = yield util_1.getClubhouseWorkflowState(stateName, http, project);
         if (!workflowState) {
             core.setFailed(`Could not find Clubhouse workflow state named ${stateName}`);
             return;
         }
-        const updatedStory = yield util_1.updateClubhouseStoryById(storyId, http, {
+        yield util_1.updateClubhouseStoryById(storyId, http, {
             workflow_state_id: workflowState.id,
         });
-        if (!updatedStory) {
-            core.setFailed(`Could not update Clubhouse story ${storyId} to workflow state ${workflowState.id}`);
-            return;
-        }
     });
 }
 exports.default = closed;
@@ -5207,7 +5203,23 @@ function getClubhouseStoryById(id, http) {
     });
 }
 exports.getClubhouseStoryById = getClubhouseStoryById;
-function getClubhouseProjectId(projectName, http) {
+function getClubhouseProject(id, http) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        try {
+            const projectResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/projects/${id}?token=${CLUBHOUSE_TOKEN}`);
+            return projectResponse.result;
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects/${id}\n${err.message}`);
+            return null;
+        }
+    });
+}
+exports.getClubhouseProject = getClubhouseProject;
+function getClubhouseProjectByName(projectName, http) {
     return __awaiter(this, void 0, void 0, function* () {
         const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
             required: true,
@@ -5219,12 +5231,7 @@ function getClubhouseProjectId(projectName, http) {
                 core.setFailed(`HTTP ${projectsResponse.statusCode} https://api.clubhouse.io/api/v3/projects`);
                 return;
             }
-            const projectNameToClubhouseId = projects.reduce((p2id, project) => {
-                p2id.set(project.name, project.id);
-                return p2id;
-            }, new Map());
-            core.debug(`Clubhouse project name to ID: ${stringFromMap(projectNameToClubhouseId)}`);
-            return projectNameToClubhouseId.get(projectName);
+            return projects.find((project) => project.name === projectName);
         }
         catch (err) {
             core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects\n${err.message}`);
@@ -5232,7 +5239,29 @@ function getClubhouseProjectId(projectName, http) {
         }
     });
 }
-exports.getClubhouseProjectId = getClubhouseProjectId;
+exports.getClubhouseProjectByName = getClubhouseProjectByName;
+function getClubhouseWorkflowState(stateName, http, project) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        const teamId = project.team_id;
+        try {
+            const teamResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/team/${teamId}?token=${CLUBHOUSE_TOKEN}`);
+            const team = teamResponse.result;
+            if (!team) {
+                core.setFailed(`HTTP ${teamResponse.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}`);
+                return null;
+            }
+            return (team.workflow.states.find((state) => state.name === stateName) || null);
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}\n${err.message}`);
+            return null;
+        }
+    });
+}
+exports.getClubhouseWorkflowState = getClubhouseWorkflowState;
 function createClubhouseStory(payload, http) {
     return __awaiter(this, void 0, void 0, function* () {
         const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
@@ -5241,17 +5270,18 @@ function createClubhouseStory(payload, http) {
         const PROJECT_NAME = core.getInput("project-name", {
             required: true,
         });
+        const STATE_NAME = core.getInput("opened-state-name");
         const githubUsername = payload.pull_request.user.login;
         const clubhouseUserId = yield getClubhouseUserId(githubUsername, http);
-        const clubhouseProjectId = yield getClubhouseProjectId(PROJECT_NAME, http);
-        if (!clubhouseProjectId) {
-            core.setFailed(`Could not find Clubhouse ID for project: ${PROJECT_NAME}`);
+        const clubhouseProject = yield getClubhouseProjectByName(PROJECT_NAME, http);
+        if (!clubhouseProject) {
+            core.setFailed(`Could not find Clubhouse project: ${PROJECT_NAME}`);
             return null;
         }
         const body = {
             name: payload.pull_request.title,
             description: payload.pull_request.body,
-            project_id: clubhouseProjectId,
+            project_id: clubhouseProject.id,
             external_tickets: [
                 {
                     external_id: payload.pull_request.id.toString(),
@@ -5261,6 +5291,12 @@ function createClubhouseStory(payload, http) {
         };
         if (clubhouseUserId) {
             body.owner_ids = [clubhouseUserId];
+        }
+        if (STATE_NAME) {
+            const workflowState = yield getClubhouseWorkflowState(STATE_NAME, http, clubhouseProject);
+            if (workflowState) {
+                body.workflow_state_id = workflowState.id;
+            }
         }
         try {
             const storyResponse = yield http.postJson(`https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`, body);
@@ -5341,43 +5377,6 @@ function addCommentToPullRequest(payload, comment) {
     });
 }
 exports.addCommentToPullRequest = addCommentToPullRequest;
-function getClubhouseWorkflowForStory(story, http) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
-            required: true,
-        });
-        const projectId = story.project_id;
-        try {
-            // get project
-            const projectResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/projects/${projectId}?token=${CLUBHOUSE_TOKEN}`);
-            const project = projectResponse.result;
-            if (!project) {
-                core.setFailed(`HTTP ${projectResponse.statusCode} https://api.clubhouse.io/api/v3/projects/${projectId}`);
-                return null;
-            }
-            const teamId = project.team_id;
-            try {
-                // get team
-                const teamResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/team/${teamId}?token=${CLUBHOUSE_TOKEN}`);
-                const team = teamResponse.result;
-                if (!team) {
-                    core.setFailed(`HTTP ${teamResponse.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}`);
-                    return null;
-                }
-                return team.workflow;
-            }
-            catch (err) {
-                core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}\n${err.message}`);
-                return null;
-            }
-        }
-        catch (err) {
-            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects/${projectId}\n${err.message}`);
-            return null;
-        }
-    });
-}
-exports.getClubhouseWorkflowForStory = getClubhouseWorkflowForStory;
 function updateClubhouseStoryById(id, http, body) {
     return __awaiter(this, void 0, void 0, function* () {
         const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {

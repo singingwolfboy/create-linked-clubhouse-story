@@ -6,9 +6,10 @@ import {
   CLUBHOUSE_STORY_URL_REGEXP,
   getClubhouseURLFromPullRequest,
   getClubhouseStoryIdFromBranchName,
-  getClubhouseWorkflowForStory,
   getClubhouseStoryById,
   updateClubhouseStoryById,
+  getClubhouseProject,
+  getClubhouseWorkflowState,
 } from "./util";
 
 export default async function closed(): Promise<void> {
@@ -34,23 +35,25 @@ export default async function closed(): Promise<void> {
     core.debug(`invalid Clubhouse URL: ${clubhouseURL}`);
     return;
   }
+
   const http = new HttpClient();
   const story = await getClubhouseStoryById(storyId, http);
   if (!story) {
     core.setFailed(`Could not get Clubhouse story ${storyId}`);
     return;
   }
-
-  const workflow = await getClubhouseWorkflowForStory(story, http);
-  if (!workflow) {
-    core.setFailed(`Could not get Clubhouse workflow for story ${storyId}`);
+  const project = await getClubhouseProject(story.project_id, http);
+  if (!project) {
+    core.setFailed(`Could not get Clubhouse project ${story.project_id}`);
     return;
   }
   const stateName = payload.pull_request.merged
     ? core.getInput("merged-state-name")
     : core.getInput("closed-state-name");
-  const workflowState = workflow.states.find(
-    (state) => state.name === stateName
+  const workflowState = await getClubhouseWorkflowState(
+    stateName,
+    http,
+    project
   );
   if (!workflowState) {
     core.setFailed(
@@ -58,13 +61,7 @@ export default async function closed(): Promise<void> {
     );
     return;
   }
-  const updatedStory = await updateClubhouseStoryById(storyId, http, {
+  await updateClubhouseStoryById(storyId, http, {
     workflow_state_id: workflowState.id,
   });
-  if (!updatedStory) {
-    core.setFailed(
-      `Could not update Clubhouse story ${storyId} to workflow state ${workflowState.id}`
-    );
-    return;
-  }
 }

@@ -51,15 +51,15 @@ test("getClubhouseUserId user-map", async () => {
   delete process.env["INPUT_USER-MAP"];
 });
 
-test("getClubhouseProjectId", async () => {
+test("getClubhouseProjectByName", async () => {
   const scope = nock("https://api.clubhouse.io")
     .get("/api/v3/projects")
     .query(true)
     .reply(200, [{ id: "abc", name: "fake-project" }]);
 
   const http = new HttpClient();
-  const chId = await util.getClubhouseProjectId("fake-project", http);
-  expect(chId).toEqual("abc");
+  const project = await util.getClubhouseProjectByName("fake-project", http);
+  expect(project).toEqual({ id: "abc", name: "fake-project" });
 
   scope.done();
 });
