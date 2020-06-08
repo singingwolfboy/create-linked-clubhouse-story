@@ -116,3 +116,17 @@ open the Developer Tools in your browser, find the API request for
 and examine the API response to find the `id` for each user.
 Note that Clubhouse makes a distinction between a `User` and a `Member`:
 you need to look up the UUID for the `Member` object.
+
+## Ignore Users
+
+You can also add a list of GitHub users to ignore for this integration.
+Multiple users should be separated by commas.
+
+```yaml
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.3
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
+    project-name: Engineering
+    ignored-users: hubot, dependabot
+```

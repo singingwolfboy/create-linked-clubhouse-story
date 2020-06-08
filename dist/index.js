@@ -4348,6 +4348,7 @@ const core = __importStar(__webpack_require__(470));
 const github_1 = __webpack_require__(469);
 const opened_1 = __importDefault(__webpack_require__(802));
 const closed_1 = __importDefault(__webpack_require__(104));
+const util_1 = __webpack_require__(345);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (github_1.context.eventName !== "pull_request") {
@@ -4355,6 +4356,12 @@ function run() {
             return;
         }
         const payload = github_1.context.payload;
+        const ignoredUsers = util_1.getIgnoredUsers();
+        const author = payload.pull_request.user.login;
+        if (ignoredUsers.has(author)) {
+            core.debug(`ignored pull_request event from user ${author}`);
+            return;
+        }
         switch (payload.action) {
             case "opened":
                 return opened_1.default();
@@ -5127,6 +5134,18 @@ exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+\/)?ch(\d+)(?:\/.+)?$/;
 function stringFromMap(map) {
     return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
+function getIgnoredUsers() {
+    const s = new Set();
+    const IGNORED_USERS = core.getInput("ignored-users");
+    if (!IGNORED_USERS) {
+        return s;
+    }
+    for (const username of IGNORED_USERS.split(",")) {
+        s.add(username.trim());
+    }
+    return s;
+}
+exports.getIgnoredUsers = getIgnoredUsers;
 function getClubhouseUserId(githubUsername, http) {
     return __awaiter(this, void 0, void 0, function* () {
         const USER_MAP_STRING = core.getInput("user-map");

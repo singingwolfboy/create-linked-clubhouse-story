@@ -29,6 +29,18 @@ function stringFromMap(map: Map<Stringable, Stringable>): string {
   return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
 
+export function getIgnoredUsers(): Set<string> {
+  const s = new Set<string>();
+  const IGNORED_USERS = core.getInput("ignored-users");
+  if (!IGNORED_USERS) {
+    return s;
+  }
+  for (const username of IGNORED_USERS.split(",")) {
+    s.add(username.trim());
+  }
+  return s;
+}
+
 export async function getClubhouseUserId(
   githubUsername: string,
   http: HttpClient
