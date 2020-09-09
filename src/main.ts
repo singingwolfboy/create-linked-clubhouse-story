@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import { context } from "@actions/github";
-import { WebhookPayloadPullRequest } from "@octokit/webhooks";
+import { EventPayloads } from "@octokit/webhooks";
 import opened from "./opened";
 import closed from "./closed";
 import { getIgnoredUsers } from "./util";
@@ -11,7 +11,7 @@ async function run(): Promise<void> {
     return;
   }
 
-  const payload = context.payload as WebhookPayloadPullRequest;
+  const payload = context.payload as EventPayloads.WebhookPayloadPullRequest;
   const ignoredUsers = getIgnoredUsers();
   const author = payload.pull_request.user.login;
   if (ignoredUsers.has(author)) {

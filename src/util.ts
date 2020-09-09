@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
-import { GitHub } from "@actions/github";
-import { WebhookPayloadPullRequest } from "@octokit/webhooks";
+import * as github from "@actions/github";
+import { EventPayloads } from "@octokit/webhooks";
 import { HttpClient } from "@actions/http-client";
 import {
   ClubhouseMember,
@@ -94,7 +94,7 @@ export async function getClubhouseUserId(
     required: true,
   });
 
-  const octokit = new GitHub(GITHUB_TOKEN);
+  const octokit = github.getOctokit(GITHUB_TOKEN);
   const userResponse = await octokit.users.getByUsername({
     username: githubUsername,
   });
@@ -217,7 +217,7 @@ export async function getClubhouseWorkflowState(
 }
 
 export async function createClubhouseStory(
-  payload: WebhookPayloadPullRequest,
+  payload: EventPayloads.WebhookPayloadPullRequest,
   http: HttpClient
 ): Promise<ClubhouseStory | null> {
   const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
@@ -299,7 +299,7 @@ export function getClubhouseStoryIdFromBranchName(
 }
 
 export async function getClubhouseURLFromPullRequest(
-  payload: WebhookPayloadPullRequest
+  payload: EventPayloads.WebhookPayloadPullRequest
 ): Promise<string | null> {
   const GITHUB_TOKEN = core.getInput("github-token", {
     required: true,
@@ -312,7 +312,7 @@ export async function getClubhouseURLFromPullRequest(
   }
 
   // what about in the first page of comments?
-  const octokit = new GitHub(GITHUB_TOKEN);
+  const octokit = github.getOctokit(GITHUB_TOKEN);
   const params = {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
@@ -341,14 +341,14 @@ export async function getClubhouseURLFromPullRequest(
 }
 
 export async function addCommentToPullRequest(
-  payload: WebhookPayloadPullRequest,
+  payload: EventPayloads.WebhookPayloadPullRequest,
   comment: string
 ): Promise<boolean> {
   const GITHUB_TOKEN = core.getInput("github-token", {
     required: true,
   });
 
-  const octokit = new GitHub(GITHUB_TOKEN);
+  const octokit = github.getOctokit(GITHUB_TOKEN);
   const params = {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
