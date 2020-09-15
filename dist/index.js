@@ -274,13 +274,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getIgnoredUsers = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
 const core = __importStar(__webpack_require__(186));
-const github_1 = __importDefault(__webpack_require__(438));
+const github = __importStar(__webpack_require__(438));
 exports.CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
 exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+\/)?ch(\d+)(?:\/.+)?$/;
 /**
@@ -346,7 +343,7 @@ function getClubhouseUserId(githubUsername, http) {
         const GITHUB_TOKEN = core.getInput("github-token", {
             required: true,
         });
-        const octokit = github_1.default.getOctokit(GITHUB_TOKEN);
+        const octokit = github.getOctokit(GITHUB_TOKEN);
         const userResponse = yield octokit.users.getByUsername({
             username: githubUsername,
         });
@@ -510,7 +507,7 @@ function getClubhouseURLFromPullRequest(payload) {
             return results[0];
         }
         // what about in the first page of comments?
-        const octokit = github_1.default.getOctokit(GITHUB_TOKEN);
+        const octokit = github.getOctokit(GITHUB_TOKEN);
         const params = {
             owner: payload.repository.owner.login,
             repo: payload.repository.name,
@@ -538,7 +535,7 @@ function addCommentToPullRequest(payload, comment) {
         const GITHUB_TOKEN = core.getInput("github-token", {
             required: true,
         });
-        const octokit = github_1.default.getOctokit(GITHUB_TOKEN);
+        const octokit = github.getOctokit(GITHUB_TOKEN);
         const params = {
             owner: payload.repository.owner.login,
             repo: payload.repository.name,
