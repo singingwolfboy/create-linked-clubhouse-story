@@ -15,17 +15,19 @@ async function run(): Promise<void> {
   const excludedUsers = getExcludedUsers();
   const includedUsers = getIncludedUsers();
   const author = payload.pull_request.user.login;
-  if(includedUsers) {
-    core.debug(`included-users is set ${includedUsers}. Only PRs from these users will create a Clubhouse story`)
+  if (includedUsers) {
+    core.debug(
+      `included-users is set ${includedUsers}. Only PRs from these users will create a Clubhouse story`
+    );
     if (includedUsers.has(author)) {
       core.debug(`${author} is in included-users`);
-    }
-    else
-      return;
+    } else return;
   }
 
   if (excludedUsers.has(author)) {
-    core.debug(`ignored pull_request event from user ${author} who is listed in exluded-users`);
+    core.debug(
+      `ignored pull_request event from user ${author} who is listed in exluded-users`
+    );
     return;
   }
 
