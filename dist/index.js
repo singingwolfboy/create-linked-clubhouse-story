@@ -142,10 +142,19 @@ function run() {
             return;
         }
         const payload = github_1.context.payload;
-        const ignoredUsers = util_1.getIgnoredUsers();
+        const excludedUsers = util_1.getExcludedUsers();
+        const includedUsers = util_1.getIncludedUsers();
         const author = payload.pull_request.user.login;
-        if (ignoredUsers.has(author)) {
-            core.debug(`ignored pull_request event from user ${author}`);
+        if (includedUsers) {
+            core.debug(`included-users is set ${includedUsers}. Only PRs from these users will create a Clubhouse story`);
+            if (includedUsers.has(author)) {
+                core.debug(`${author} is in included-users`);
+            }
+            else
+                return;
+        }
+        if (excludedUsers.has(author)) {
+            core.debug(`ignored pull_request event from user ${author} who is listed in exluded-users`);
             return;
         }
         switch (payload.action) {
@@ -275,7 +284,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getIgnoredUsers = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
+exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getIncludedUsers = exports.getExcludedUsers = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 exports.CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
@@ -289,18 +298,30 @@ exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+\/)?ch(\d+)(?:\/.+)?$/;
 function stringFromMap(map) {
     return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
-function getIgnoredUsers() {
+function getExcludedUsers() {
     const s = new Set();
-    const IGNORED_USERS = core.getInput("ignored-users");
-    if (!IGNORED_USERS) {
+    const EXCLUDED_USERS = core.getInput("excluded-users");
+    if (!EXCLUDED_USERS) {
         return s;
     }
-    for (const username of IGNORED_USERS.split(",")) {
+    for (const username of EXCLUDED_USERS.split(",")) {
         s.add(username.trim());
     }
     return s;
 }
-exports.getIgnoredUsers = getIgnoredUsers;
+exports.getExcludedUsers = getExcludedUsers;
+function getIncludedUsers() {
+    const s = new Set();
+    const INCLUDED_USERS = core.getInput("included-users");
+    if (!INCLUDED_USERS) {
+        return s;
+    }
+    for (const username of INCLUDED_USERS.split(",")) {
+        s.add(username.trim());
+    }
+    return s;
+}
+exports.getIncludedUsers = getIncludedUsers;
 function getClubhouseUserId(githubUsername, http) {
     return __awaiter(this, void 0, void 0, function* () {
         const USER_MAP_STRING = core.getInput("user-map");
@@ -453,7 +474,7 @@ function createClubhouseStory(payload, http) {
             return null;
         }
         const body = {
-            name: payload.pull_request.title,
+            name: `${payload.repository.name} - ${payload.pull_request.title}`,
             description: payload.pull_request.body,
             project_id: clubhouseProject.id,
             external_tickets: [
