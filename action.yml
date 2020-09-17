@@ -27,7 +27,9 @@ inputs:
       Clubhouse story is successfully created. The template is populated
       with a `story` variable.
     default: "Clubhouse story: {{{ story.app_url }}}"
-  ignored-users:
+  included-users:
+    description: Comma-separated list of GitHub users to create Clubhouse stories. 
+  exluded-users:
     description: Comma-separated list of GitHub users to ignore. Often used for bots.
   user-map:
     description: Map GitHub usernames to Clubhouse UUIDs

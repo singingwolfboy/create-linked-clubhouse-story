@@ -29,13 +29,25 @@ function stringFromMap(map: Map<Stringable, Stringable>): string {
   return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
 
-export function getIgnoredUsers(): Set<string> {
+export function getExcludedUsers(): Set<string> {
   const s = new Set<string>();
-  const IGNORED_USERS = core.getInput("ignored-users");
-  if (!IGNORED_USERS) {
+  const EXCLUDED_USERS = core.getInput("excluded-users");
+  if (!EXCLUDED_USERS) {
     return s;
   }
-  for (const username of IGNORED_USERS.split(",")) {
+  for (const username of EXCLUDED_USERS.split(",")) {
+    s.add(username.trim());
+  }
+  return s;
+}
+
+export function getIncludedUsers(): Set<string> {
+  const s = new Set<string>();
+  const INCLUDED_USERS = core.getInput("included-users");
+  if (!INCLUDED_USERS) {
+    return s;
+  }
+  for (const username of INCLUDED_USERS.split(",")) {
     s.add(username.trim());
   }
   return s;
@@ -237,7 +249,7 @@ export async function createClubhouseStory(
   }
 
   const body: ClubhouseCreateStoryBody = {
-    name: payload.pull_request.title,
+    name: `${payload.repository.name} - ${payload.pull_request.title}`,
     description: payload.pull_request.body,
     project_id: clubhouseProject.id,
     external_tickets: [
