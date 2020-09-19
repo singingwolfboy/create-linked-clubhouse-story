@@ -19,7 +19,7 @@ inputs:
     description: The name of the workflow state for Clubhouse stories when a pull request is closed.
     required: true
   merged-state-name:
-    description: The name of the workflow state for Clubhouse stories when a pull request is closed.
+    description: The name of the workflow state for Clubhouse stories when a pull request is merged.
     required: true
   comment-template:
     description: >-
