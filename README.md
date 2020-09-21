@@ -46,9 +46,12 @@ It works for the opposite use-case, assuming that the Clubhouse story exists
 _before_ the pull request is created.
 
 This Action will specifically check for branch names that follow the naming
-convention for this built-in integration. Any branch name that looks like
-`*/ch####/*` will be ignored by this Action, on the assumption that a Clubhouse
-story already exists for the pull request.
+convention for this built-in integration. Any branch name that contains
+`ch####` will be ignored by this Action, on the assumption that a Clubhouse
+story already exists for the pull request. The `ch####` must be separated
+from leading or following text with either a `/` or a `-`. So, branches
+named `ch1`, `prefix/ch23`, `prefix-ch123`, `ch3456/suffix`, `ch3456-suffux`,
+`prefix/ch987/suffix` would match, but `xch123` and `ch987end` would not.
 
 ## Customizing the Pull Request Comment
 
