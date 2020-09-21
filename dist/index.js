@@ -279,7 +279,7 @@ exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.get
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 exports.CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
-exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+\/)?ch(\d+)(?:\/.+)?$/;
+exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-\/])?ch(\d+)(?:[-\/].+)?$/;
 /**
  * Convert a Map to a sorted string representation. Useful for debugging.
  *
