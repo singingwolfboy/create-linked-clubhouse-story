@@ -94,27 +94,28 @@ test("getClubhouseWorkflowState", async () => {
   scope.done();
 });
 
-test("getClubhouseStoryIdFromBranchName matching", () => {
-  [["ch1", "1"], 
-    ["ch89/something", "89"], 
-    ["ch99-something", "99"],
-    ["prefix-1/ch123", "123"],
-    ["prefix-1-ch321", "321"],
-    ["prefix/ch5678/suffix", "5678"],
-    ["prefix-ch6789/suffix-more", "6789"],
-    ["prefix/ch7890-suffix", "7890"],
-    ["prefix-ch0987-suffix-extra", "0987"]].forEach(item => {
-    const id = util.getClubhouseStoryIdFromBranchName(item[0]);
-    expect(id).toEqual(item[1]);
-  });
+test.each([
+  ["ch1", "1"],
+  ["ch89/something", "89"],
+  ["ch99-something", "99"],
+  ["prefix-1/ch123", "123"],
+  ["prefix-1-ch321", "321"],
+  ["prefix/ch5678/suffix", "5678"],
+  ["prefix-ch6789/suffix-more", "6789"],
+  ["prefix/ch7890-suffix", "7890"],
+  ["prefix-ch0987-suffix-extra", "0987"],
+])("getClubhouseStoryIdFromBranchName matches %s", (branch, expected) => {
+  const id = util.getClubhouseStoryIdFromBranchName(branch);
+  expect(id).toEqual(expected);
 });
 
-test("getClubhouseStoryIdFromBranchName non-matching", () => {
-  ["prefix/ch8765+suffix", "ch554X", "ach8765", "this_ch1234"].forEach(branch => {
+test.each(["prefix/ch8765+suffix", "ch554X", "ach8765", "this_ch1234"])(
+  "getClubhouseStoryIdFromBranchName does not match %s",
+  (branch) => {
     const id = util.getClubhouseStoryIdFromBranchName(branch);
     expect(id).toBeNull();
-  })
-});
+  }
+);
 
 test("getClubhouseURLFromPullRequest", async () => {
   const payload = {
