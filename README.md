@@ -23,7 +23,7 @@ jobs:
   clubhouse:
     runs-on: ubuntu-latest
     steps:
-      - uses: singingwolfboy/create-linked-clubhouse-story@v1.4
+      - uses: singingwolfboy/create-linked-clubhouse-story@v1.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -59,7 +59,7 @@ You can customize the comment posted on pull requests using the `comment-templat
 variable, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.4
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -98,7 +98,7 @@ map GitHub users to Clubhouse users. The user map should be passed in the
 formatted string. Here's an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.4
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -126,7 +126,7 @@ You can also add a list of GitHub users to ignore for this integration.
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.4
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
