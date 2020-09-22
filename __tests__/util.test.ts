@@ -9,6 +9,8 @@ beforeEach(() => {
   process.env["INPUT_CLUBHOUSE-TOKEN"] = "fake-clubhouse-token";
   process.env["INPUT_GITHUB-TOKEN"] = "fake-github-token";
   process.env["INPUT_PROJECT-NAME"] = "fake-project";
+  process.env["INPUT_INCLUDED-USERS"] = "fake-included-user-1, fake-included-user-2";
+  process.env["INPUT_EXCLUDED-USERS"] = "fake-excluded-user-1, fake-excluded-user-2";
   if (!nock.isActive()) {
     nock.activate();
   }
@@ -18,6 +20,8 @@ afterEach(() => {
   delete process.env["INPUT_CLUBHOUSE-TOKEN"];
   delete process.env["INPUT_GITHUB-TOKEN"];
   delete process.env["INPUT_PROJECT-NAME"];
+  delete process.env["INPUT_INCLUDED-USERS"];
+  delete process.env["INPUT_EXCLUDED-USERS"];
   nock.restore();
 });
 
@@ -161,4 +165,16 @@ test("getClubhouseURLFromPullRequest comment", async () => {
   expect(url).toEqual("https://app.clubhouse.io/org/story/12345");
 
   scope.done();
+});
+
+test("getIncludedUsers", async () => {
+  const included_users = util.getIncludedUsers();
+  expect(included_users.has('fake-included-user-1')).toEqual(true);
+  expect(included_users.has('fake-included-user-2')).toEqual(true);
+});
+
+test("getExcludedUsers", async () => {
+  const included_users = util.getExcludedUsers();
+  expect(included_users.has('fake-excluded-user-1')).toEqual(true);
+  expect(included_users.has('fake-excluded-user-2')).toEqual(true);
 });

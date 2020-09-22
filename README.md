@@ -117,9 +117,9 @@ and examine the API response to find the `id` for each user.
 Note that Clubhouse makes a distinction between a `User` and a `Member`:
 you need to look up the UUID for the `Member` object.
 
-## Ignore Users
+## Excluded Users
 
-You can also add a list of GitHub users to ignore for this integration.
+You can also add a list of GitHub excluded users to ignore for this integration.
 Multiple users should be separated by commas.
 
 ```yaml
@@ -128,5 +128,19 @@ Multiple users should be separated by commas.
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
     project-name: Engineering
-    ignored-users: hubot, dependabot
+    excluded-users: hubot, dependabot
+```
+
+## Included Users
+
+You can also add a list of GitHub included users for this integration. This works opposite of the excluded users list above. For example, if you wanted only PRs from a specific GitHub user such as dependabot PRs. 
+Multiple users should be separated by commas.
+
+```yaml
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.4
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
+    project-name: Engineering
+    included-users: dependabot
 ```

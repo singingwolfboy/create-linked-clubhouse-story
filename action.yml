@@ -28,8 +28,8 @@ inputs:
       with a `story` variable.
     default: "Clubhouse story: {{{ story.app_url }}}"
   included-users:
-    description: Comma-separated list of GitHub users to create Clubhouse stories. 
-  exluded-users:
+    description: Comma-separated list of specific GitHub users to create Clubhouse stories for. 
+  excluded-users:
     description: Comma-separated list of GitHub users to ignore. Often used for bots.
   user-map:
     description: Map GitHub usernames to Clubhouse UUIDs
