@@ -18,6 +18,8 @@ afterEach(() => {
   delete process.env["INPUT_CLUBHOUSE-TOKEN"];
   delete process.env["INPUT_GITHUB-TOKEN"];
   delete process.env["INPUT_PROJECT-NAME"];
+  delete process.env["INPUT_ONLY-USERS"];
+  delete process.env["INPUT_IGNORED-USERS"];
   nock.restore();
 });
 
@@ -161,4 +163,34 @@ test("getClubhouseURLFromPullRequest comment", async () => {
   expect(url).toEqual("https://app.clubhouse.io/org/story/12345");
 
   scope.done();
+});
+
+test("shouldProcessPullRequestForUser user lists not defined", async () => {
+  expect(util.shouldProcessPullRequestForUser("github-author-1")).toBeTruthy;
+});
+
+test("shouldProcessPullRequestForUser both user lists defined", async () => {
+  process.env["INPUT_ONLY-USERS"] = "fake-user-1";
+  process.env["INPUT_IGNORED-USERS"] = "fake-user-1";
+  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeFalsy;
+});
+
+test("shouldProcessPullRequestForUser fake-user-1 in only-users", async () => {
+  process.env["INPUT_ONLY-USERS"] = "fake-user-1";
+  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeTruthy;
+});
+
+test("shouldProcessPullRequestForUser fake-user-1 in ignored-users", async () => {
+  process.env["INPUT_IGNORED-USERS"] = "fake-user-1";
+  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeFalsy;
+});
+
+test("shouldProcessPullRequestForUser fake-user-1 not in ignored-users", async () => {
+  process.env["INPUT_IGNORED-USERS"] = "fake-user-2";
+  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeTruthy;
+});
+
+test("shouldProcessPullRequestForUser fake-user-1 not in only-users", async () => {
+  process.env["INPUT_ONLY-USERS"] = "fake-user-2";
+  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeFalsy;
 });
