@@ -142,21 +142,9 @@ function run() {
             return;
         }
         const payload = github_1.context.payload;
-        const excludedUsers = util_1.getExcludedUsers();
-        const includedUsers = util_1.getIncludedUsers();
         const author = payload.pull_request.user.login;
-        if (includedUsers) {
-            core.debug(`included-users is set ${includedUsers}. Only PRs from these users will create a Clubhouse story`);
-            if (includedUsers.has(author)) {
-                core.debug(`${author} is in included-users`);
-            }
-            else
-                return;
-        }
-        if (excludedUsers.has(author)) {
-            core.debug(`ignored pull_request event from user ${author} who is listed in exluded-users`);
+        if (!util_1.shouldProcessPullRequestForUser(author))
             return;
-        }
         switch (payload.action) {
             case "opened":
                 return opened_1.default();
@@ -284,7 +272,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getIncludedUsers = exports.getExcludedUsers = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
+exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 exports.CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
@@ -298,30 +286,56 @@ exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+\/)?ch(\d+)(?:\/.+)?$/;
 function stringFromMap(map) {
     return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
-function getExcludedUsers() {
-    const s = new Set();
-    const EXCLUDED_USERS = core.getInput("excluded-users");
-    if (!EXCLUDED_USERS) {
-        return s;
+function shouldProcessPullRequestForUser(user) {
+    const IGNORED_USERS = core.getInput("ignored-users");
+    const ONLY_USERS = core.getInput("only-users");
+    let ignoredUsers;
+    let onlyUsers;
+    if (IGNORED_USERS) {
+        ignoredUsers = getUserListAsSet(IGNORED_USERS);
     }
-    for (const username of EXCLUDED_USERS.split(",")) {
+    if (ONLY_USERS) {
+        onlyUsers = getUserListAsSet(ONLY_USERS);
+    }
+    if (!ignoredUsers && !onlyUsers) {
+        core.debug("No users defined in only-users or ignored-users. Proceeding with Clubhouse workflow...");
+        return true;
+    }
+    if (onlyUsers && ignoredUsers) {
+        core.setFailed("You have defined both ignored-users and only-users lists, please use one or the other. Cancelling Clubhouse workflow...");
+        return false;
+    }
+    if (onlyUsers) {
+        if (onlyUsers.has(user)) {
+            core.debug("PR author is defined in only-users list. Proceeding with Clubhouse workflow...");
+            return true;
+        }
+        else {
+            core.debug("You have defined a only-users list, but the PR author isn't in this list. Ignoring user...");
+            return true;
+        }
+    }
+    if (ignoredUsers) {
+        if (ignoredUsers.has(user)) {
+            core.debug("PR author is defined in ignored-users list. Ignoring user...");
+            return false;
+        }
+        else {
+            core.debug("PR author is NOT defined in ignored-users list. Proceeding with Clubhouse workflow...");
+            return true;
+        }
+    }
+    return false;
+}
+exports.shouldProcessPullRequestForUser = shouldProcessPullRequestForUser;
+function getUserListAsSet(userList) {
+    const s = new Set();
+    for (const username of userList.split(",")) {
         s.add(username.trim());
     }
     return s;
 }
-exports.getExcludedUsers = getExcludedUsers;
-function getIncludedUsers() {
-    const s = new Set();
-    const INCLUDED_USERS = core.getInput("included-users");
-    if (!INCLUDED_USERS) {
-        return s;
-    }
-    for (const username of INCLUDED_USERS.split(",")) {
-        s.add(username.trim());
-    }
-    return s;
-}
-exports.getIncludedUsers = getIncludedUsers;
+exports.getUserListAsSet = getUserListAsSet;
 function getClubhouseUserId(githubUsername, http) {
     return __awaiter(this, void 0, void 0, function* () {
         const USER_MAP_STRING = core.getInput("user-map");
@@ -1989,7 +2003,9 @@ exports.Octokit = Octokit;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-var isPlainObject = __webpack_require__(558);
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var isPlainObject = _interopDefault(__webpack_require__(840));
 var universalUserAgent = __webpack_require__(429);
 
 function lowercaseKeys(object) {
@@ -2006,7 +2022,7 @@ function lowercaseKeys(object) {
 function mergeDeep(defaults, options) {
   const result = Object.assign({}, defaults);
   Object.keys(options).forEach(key => {
-    if (isPlainObject.isPlainObject(options[key])) {
+    if (isPlainObject(options[key])) {
       if (!(key in defaults)) Object.assign(result, {
         [key]: options[key]
       });else result[key] = mergeDeep(defaults[key], options[key]);
@@ -2269,9 +2285,9 @@ function parse(options) {
 
   const omittedParameters = Object.keys(options).filter(option => urlVariableNames.includes(option)).concat("baseUrl");
   const remainingParameters = omit(parameters, omittedParameters);
-  const isBinaryRequest = /application\/octet-stream/i.test(headers.accept);
+  const isBinaryRequset = /application\/octet-stream/i.test(headers.accept);
 
-  if (!isBinaryRequest) {
+  if (!isBinaryRequset) {
     if (options.mediaType.format) {
       // e.g. application/vnd.github.v3+json => application/vnd.github.v3.raw
       headers.accept = headers.accept.split(/,/).map(preview => preview.replace(/application\/vnd(\.\w+)(\.v3)?(\.\w+)?(\+json)?$/, `application/vnd$1$2.${options.mediaType.format}`)).join(",");
@@ -2340,7 +2356,7 @@ function withDefaults(oldDefaults, newDefaults) {
   });
 }
 
-const VERSION = "6.0.6";
+const VERSION = "6.0.5";
 
 const userAgent = `octokit-endpoint.js/${VERSION} ${universalUserAgent.getUserAgent()}`; // DEFAULTS has all properties set that EndpointOptions has, except url.
 // So we use RequestParameters and add method as additional required property.
@@ -2366,52 +2382,6 @@ exports.endpoint = endpoint;
 
 /***/ }),
 
-/***/ 558:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-/*!
- * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-function isObject(o) {
-  return Object.prototype.toString.call(o) === '[object Object]';
-}
-
-function isPlainObject(o) {
-  var ctor,prot;
-
-  if (isObject(o) === false) return false;
-
-  // If has modified constructor
-  ctor = o.constructor;
-  if (ctor === undefined) return true;
-
-  // If has modified prototype
-  prot = ctor.prototype;
-  if (isObject(prot) === false) return false;
-
-  // If constructor does not have an Object-specific method
-  if (prot.hasOwnProperty('isPrototypeOf') === false) {
-    return false;
-  }
-
-  // Most likely a plain Object
-  return true;
-}
-
-exports.isPlainObject = isPlainObject;
-
-
-/***/ }),
-
 /***/ 668:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -2423,7 +2393,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 var request = __webpack_require__(234);
 var universalUserAgent = __webpack_require__(429);
 
-const VERSION = "4.5.6";
+const VERSION = "4.5.4";
 
 class GraphqlError extends Error {
   constructor(request, response) {
@@ -2446,18 +2416,13 @@ class GraphqlError extends Error {
 }
 
 const NON_VARIABLE_OPTIONS = ["method", "baseUrl", "url", "headers", "request", "query", "mediaType"];
-const GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
 function graphql(request, query, options) {
-  if (typeof query === "string" && options && "query" in options) {
-    return Promise.reject(new Error(`[@octokit/graphql] "query" cannot be used as variable name`));
-  }
-
-  const parsedOptions = typeof query === "string" ? Object.assign({
+  options = typeof query === "string" ? options = Object.assign({
     query
-  }, options) : query;
-  const requestOptions = Object.keys(parsedOptions).reduce((result, key) => {
+  }, options) : options = query;
+  const requestOptions = Object.keys(options).reduce((result, key) => {
     if (NON_VARIABLE_OPTIONS.includes(key)) {
-      result[key] = parsedOptions[key];
+      result[key] = options[key];
       return result;
     }
 
@@ -2465,17 +2430,9 @@ function graphql(request, query, options) {
       result.variables = {};
     }
 
-    result.variables[key] = parsedOptions[key];
+    result.variables[key] = options[key];
     return result;
-  }, {}); // workaround for GitHub Enterprise baseUrl set with /api/v3 suffix
-  // https://github.com/octokit/auth-app.js/issues/111#issuecomment-657610451
-
-  const baseUrl = parsedOptions.baseUrl || request.endpoint.DEFAULTS.baseUrl;
-
-  if (GHES_V3_SUFFIX_REGEX.test(baseUrl)) {
-    requestOptions.url = baseUrl.replace(GHES_V3_SUFFIX_REGEX, "/api/graphql");
-  }
-
+  }, {});
   return request(requestOptions).then(response => {
     if (response.data.errors) {
       const headers = {};
@@ -2536,7 +2493,7 @@ exports.withCustomRequest = withCustomRequest;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-const VERSION = "2.4.0";
+const VERSION = "2.3.2";
 
 /**
  * Some “list” response that can be paginated have a different response structure
@@ -2860,15 +2817,8 @@ const Endpoints = {
     }]
   },
   codeScanning: {
-    getAlert: ["GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}", {}, {
-      renamedParameters: {
-        alert_id: "alert_number"
-      }
-    }],
-    listAlertsForRepo: ["GET /repos/{owner}/{repo}/code-scanning/alerts"],
-    listRecentAnalyses: ["GET /repos/{owner}/{repo}/code-scanning/analyses"],
-    updateAlert: ["PATCH /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}"],
-    uploadSarif: ["POST /repos/{owner}/{repo}/code-scanning/sarifs"]
+    getAlert: ["GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_id}"],
+    listAlertsForRepo: ["GET /repos/{owner}/{repo}/code-scanning/alerts"]
   },
   codesOfConduct: {
     getAllCodesOfConduct: ["GET /codes_of_conduct", {
@@ -3723,7 +3673,7 @@ const Endpoints = {
   }
 };
 
-const VERSION = "4.2.0";
+const VERSION = "4.1.4";
 
 function endpointsToMethods(octokit, endpointsMap) {
   const newMethods = {};
@@ -3903,18 +3853,18 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var endpoint = __webpack_require__(440);
 var universalUserAgent = __webpack_require__(429);
-var isPlainObject = __webpack_require__(62);
+var isPlainObject = _interopDefault(__webpack_require__(840));
 var nodeFetch = _interopDefault(__webpack_require__(467));
 var requestError = __webpack_require__(537);
 
-const VERSION = "5.4.9";
+const VERSION = "5.4.7";
 
 function getBufferResponse(response) {
   return response.arrayBuffer();
 }
 
 function fetchWrapper(requestOptions) {
-  if (isPlainObject.isPlainObject(requestOptions.body) || Array.isArray(requestOptions.body)) {
+  if (isPlainObject(requestOptions.body) || Array.isArray(requestOptions.body)) {
     requestOptions.body = JSON.stringify(requestOptions.body);
   }
 
@@ -4043,52 +3993,6 @@ const request = withDefaults(endpoint.endpoint, {
 
 exports.request = request;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 62:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-/*!
- * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-function isObject(o) {
-  return Object.prototype.toString.call(o) === '[object Object]';
-}
-
-function isPlainObject(o) {
-  var ctor,prot;
-
-  if (isObject(o) === false) return false;
-
-  // If has modified constructor
-  ctor = o.constructor;
-  if (ctor === undefined) return true;
-
-  // If has modified prototype
-  prot = ctor.prototype;
-  if (isObject(prot) === false) return false;
-
-  // If constructor does not have an Object-specific method
-  if (prot.hasOwnProperty('isPrototypeOf') === false) {
-    return false;
-  }
-
-  // Most likely a plain Object
-  return true;
-}
-
-exports.isPlainObject = isPlainObject;
 
 
 /***/ }),
@@ -4293,6 +4197,50 @@ class Deprecation extends Error {
 }
 
 exports.Deprecation = Deprecation;
+
+
+/***/ }),
+
+/***/ 840:
+/***/ ((module) => {
+
+"use strict";
+
+
+/*!
+ * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+function isObject(o) {
+  return Object.prototype.toString.call(o) === '[object Object]';
+}
+
+function isPlainObject(o) {
+  var ctor,prot;
+
+  if (isObject(o) === false) return false;
+
+  // If has modified constructor
+  ctor = o.constructor;
+  if (ctor === undefined) return true;
+
+  // If has modified prototype
+  prot = ctor.prototype;
+  if (isObject(prot) === false) return false;
+
+  // If constructor does not have an Object-specific method
+  if (prot.hasOwnProperty('isPrototypeOf') === false) {
+    return false;
+  }
+
+  // Most likely a plain Object
+  return true;
+}
+
+module.exports = isPlainObject;
 
 
 /***/ }),

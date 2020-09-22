@@ -29,25 +29,67 @@ function stringFromMap(map: Map<Stringable, Stringable>): string {
   return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
 
-export function getExcludedUsers(): Set<string> {
-  const s = new Set<string>();
-  const EXCLUDED_USERS = core.getInput("excluded-users");
-  if (!EXCLUDED_USERS) {
-    return s;
+export function shouldProcessPullRequestForUser(user: string): boolean {
+  const IGNORED_USERS = core.getInput("ignored-users");
+  const ONLY_USERS = core.getInput("only-users");
+  let ignoredUsers;
+  let onlyUsers;
+
+  if (IGNORED_USERS) {
+    ignoredUsers = getUserListAsSet(IGNORED_USERS);
   }
-  for (const username of EXCLUDED_USERS.split(",")) {
-    s.add(username.trim());
+  if (ONLY_USERS) {
+    onlyUsers = getUserListAsSet(ONLY_USERS);
   }
-  return s;
+
+  if (!ignoredUsers && !onlyUsers) {
+    core.debug(
+      "No users defined in only-users or ignored-users. Proceeding with Clubhouse workflow..."
+    );
+    return true;
+  }
+
+  if (onlyUsers && ignoredUsers) {
+    core.setFailed(
+      "You have defined both ignored-users and only-users lists, please use one or the other. Cancelling Clubhouse workflow..."
+    );
+    return false;
+  }
+
+  if (onlyUsers) {
+    if (onlyUsers.has(user)) {
+      core.debug(
+        "PR author is defined in only-users list. Proceeding with Clubhouse workflow..."
+      );
+      return true;
+    } else {
+      core.debug(
+        "You have defined a only-users list, but the PR author isn't in this list. Ignoring user..."
+      );
+      return true;
+    }
+  }
+
+  if (ignoredUsers) {
+    if (ignoredUsers.has(user)) {
+      core.debug(
+        "PR author is defined in ignored-users list. Ignoring user..."
+      );
+      return false;
+    } else {
+      core.debug(
+        "PR author is NOT defined in ignored-users list. Proceeding with Clubhouse workflow..."
+      );
+      return true;
+    }
+  }
+
+  return false;
 }
 
-export function getIncludedUsers(): Set<string> {
+export function getUserListAsSet(userList: string): Set<string> {
   const s = new Set<string>();
-  const INCLUDED_USERS = core.getInput("included-users");
-  if (!INCLUDED_USERS) {
-    return s;
-  }
-  for (const username of INCLUDED_USERS.split(",")) {
+  for (const username of userList.split(",")) {
     s.add(username.trim());
   }
   return s;
