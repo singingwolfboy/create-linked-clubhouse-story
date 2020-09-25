@@ -237,7 +237,7 @@ export async function createClubhouseStory(
   }
 
   const body: ClubhouseCreateStoryBody = {
-    name: payload.pull_request.title,
+    name: `${payload.repository.name} - ${payload.pull_request.title}`,
     description: payload.pull_request.body,
     project_id: clubhouseProject.id,
     external_tickets: [

@@ -453,7 +453,7 @@ function createClubhouseStory(payload, http) {
             return null;
         }
         const body = {
-            name: payload.pull_request.title,
+            name: `${payload.repository.name} - ${payload.pull_request.title}`,
             description: payload.pull_request.body,
             project_id: clubhouseProject.id,
             external_tickets: [
