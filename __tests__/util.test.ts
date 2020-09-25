@@ -166,31 +166,49 @@ test("getClubhouseURLFromPullRequest comment", async () => {
 });
 
 test("shouldProcessPullRequestForUser user lists not defined", async () => {
-  expect(util.shouldProcessPullRequestForUser("github-author-1")).toBeTruthy;
+  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeTruthy();
 });
 
-test("shouldProcessPullRequestForUser both user lists defined", async () => {
-  process.env["INPUT_ONLY-USERS"] = "fake-user-1";
-  process.env["INPUT_IGNORED-USERS"] = "fake-user-1";
-  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeFalsy;
+test("shouldProcessPullRequestForUser user in both lists", async () => {
+  const author = "fake-user-1";
+  process.env["INPUT_ONLY-USERS"] = `${author}, fake-user-2`;
+  process.env["INPUT_IGNORED-USERS"] = `${author}, fake-user-3`;
+  expect(() => util.shouldProcessPullRequestForUser(author)).toThrowError(
+    `PR author ${author} is defined in both ignored-users and only-users lists. Cancelling Clubhouse workflow...`
+  );
 });
 
-test("shouldProcessPullRequestForUser fake-user-1 in only-users", async () => {
-  process.env["INPUT_ONLY-USERS"] = "fake-user-1";
-  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeTruthy;
+test("shouldProcessPullRequestForUser both lists defined", async () => {
+  process.env["INPUT_ONLY-USERS"] = "fake-user-1, fake-user-2";
+  process.env["INPUT_IGNORED-USERS"] = "fake-user-3, fake-user-4";
+  expect(() => {
+    util.shouldProcessPullRequestForUser("fake-user-2");
+  }).toBeTruthy();
 });
 
-test("shouldProcessPullRequestForUser fake-user-1 in ignored-users", async () => {
-  process.env["INPUT_IGNORED-USERS"] = "fake-user-1";
-  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeFalsy;
-});
+const usersTestCases = [
+  // [author, userList, expectedResult, userListType]
+  ["fake-user-1", "fake-user-2", "false", "INPUT_ONLY-USERS"],
+  ["fake-user-2", "fake-user-2", "true", "INPUT_ONLY-USERS"],
+  ["fake-user-1", "fake-user-2, fake-user-3", "false", "INPUT_ONLY-USERS"],
+  ["fake-user-2", "fake-user-2, fake-user-3", "true", "INPUT_ONLY-USERS"],
+  ["fake-user-1", "fake-user-2", "true", "INPUT_IGNORED-USERS"],
+  ["fake-user-2", "fake-user-2", "false", "INPUT_IGNORED-USERS"],
+  ["fake-user-1", "fake-user-2, fake-user-3", "true", "INPUT_IGNORED-USERS"],
+  ["fake-user-2", "fake-user-2, fake-user-3", "false", "INPUT_IGNORED-USERS"],
+];
 
-test("shouldProcessPullRequestForUser fake-user-1 not in ignored-users", async () => {
-  process.env["INPUT_IGNORED-USERS"] = "fake-user-2";
-  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeTruthy;
-});
-
-test("shouldProcessPullRequestForUser fake-user-1 not in only-users", async () => {
-  process.env["INPUT_ONLY-USERS"] = "fake-user-2";
-  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeFalsy;
+describe("shouldProcessPullRequestForUser", () => {
+  test.each(usersTestCases)(
+    "for author %p and list %p, returns %p for input type %p",
+    (user, userList, expectedResult, inputListType) => {
+      process.env[inputListType] = userList;
+      const result = util.shouldProcessPullRequestForUser(user);
+      if (expectedResult === "true") {
+        expect(result).toBeTruthy();
+      } else if (expectedResult === "false") {
+        expect(result).toBeFalsy();
+      }
+    }
+  );
 });

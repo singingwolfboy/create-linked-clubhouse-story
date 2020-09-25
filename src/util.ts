@@ -30,67 +30,65 @@ function stringFromMap(map: Map<Stringable, Stringable>): string {
 }
 
 export function shouldProcessPullRequestForUser(user: string): boolean {
-  const IGNORED_USERS = core.getInput("ignored-users");
-  const ONLY_USERS = core.getInput("only-users");
-  let ignoredUsers;
-  let onlyUsers;
+  const ignoredUsers = getUserListAsSet(core.getInput("ignored-users"));
+  const onlyUsers = getUserListAsSet(core.getInput("only-users"));
 
-  if (IGNORED_USERS) {
-    ignoredUsers = getUserListAsSet(IGNORED_USERS);
-  }
-  if (ONLY_USERS) {
-    onlyUsers = getUserListAsSet(ONLY_USERS);
-  }
-
-  if (!ignoredUsers && !onlyUsers) {
+  if (ignoredUsers.size === 0 && onlyUsers.size === 0) {
     core.debug(
       "No users defined in only-users or ignored-users. Proceeding with Clubhouse workflow..."
     );
     return true;
   }
 
-  if (onlyUsers && ignoredUsers) {
-    core.setFailed(
-      "You have defined both ignored-users and only-users lists, please use one or the other. Cancelling Clubhouse workflow..."
-    );
-    return false;
+  if (onlyUsers.size > 0 && ignoredUsers.size > 0) {
+    if (onlyUsers.has(user) && ignoredUsers.has(user)) {
+      const errorMessage = `PR author ${user} is defined in both ignored-users and only-users lists. Cancelling Clubhouse workflow...`;
+      core.setFailed(errorMessage);
+      throw new Error(errorMessage);
+    } else {
+      core.debug(
+        `Users are defined in both lists. This may create unexpected results.`
+      );
+    }
   }
 
-  if (onlyUsers) {
+  if (onlyUsers.size > 0) {
     if (onlyUsers.has(user)) {
       core.debug(
-        "PR author is defined in only-users list. Proceeding with Clubhouse workflow..."
+        `PR author ${user} is defined in only-users list. Proceeding with Clubhouse workflow...`
       );
       return true;
     } else {
       core.debug(
-        "You have defined a only-users list, but the PR author isn't in this list. Ignoring user..."
+        `You have defined a only-users list, but PR author ${user} isn't in this list. Ignoring user...`
       );
-      return true;
+      return false;
     }
   }
 
-  if (ignoredUsers) {
+  if (ignoredUsers.size > 0) {
     if (ignoredUsers.has(user)) {
       core.debug(
-        "PR author is defined in ignored-users list. Ignoring user..."
+        `PR author ${user} is defined in ignored-users list. Ignoring user...`
       );
       return false;
     } else {
       core.debug(
-        "PR author is NOT defined in ignored-users list. Proceeding with Clubhouse workflow..."
+        `PR author ${user} is NOT defined in ignored-users list. Proceeding with Clubhouse workflow...`
       );
       return true;
     }
   }
 
-  return false;
+  return true;
 }
 
 export function getUserListAsSet(userList: string): Set<string> {
   const s = new Set<string>();
-  for (const username of userList.split(",")) {
-    s.add(username.trim());
+  if (userList) {
+    for (const username of userList.split(",")) {
+      s.add(username.trim());
+    }
   }
   return s;
 }
@@ -291,7 +289,7 @@ export async function createClubhouseStory(
   }
 
   const body: ClubhouseCreateStoryBody = {
-    name: `${payload.repository.name} - ${payload.pull_request.title}`,
+    name: payload.pull_request.title,
     description: payload.pull_request.body,
     project_id: clubhouseProject.id,
     external_tickets: [
