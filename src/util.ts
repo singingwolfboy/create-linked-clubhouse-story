@@ -29,14 +29,66 @@ function stringFromMap(map: Map<Stringable, Stringable>): string {
   return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
 
-export function getIgnoredUsers(): Set<string> {
-  const s = new Set<string>();
-  const IGNORED_USERS = core.getInput("ignored-users");
-  if (!IGNORED_USERS) {
-    return s;
+export function shouldProcessPullRequestForUser(user: string): boolean {
+  const ignoredUsers = getUserListAsSet(core.getInput("ignored-users"));
+  const onlyUsers = getUserListAsSet(core.getInput("only-users"));
+
+  if (ignoredUsers.size === 0 && onlyUsers.size === 0) {
+    core.debug(
+      "No users defined in only-users or ignored-users. Proceeding with Clubhouse workflow..."
+    );
+    return true;
   }
-  for (const username of IGNORED_USERS.split(",")) {
-    s.add(username.trim());
+
+  if (onlyUsers.size > 0 && ignoredUsers.size > 0) {
+    if (onlyUsers.has(user) && ignoredUsers.has(user)) {
+      const errorMessage = `PR author ${user} is defined in both ignored-users and only-users lists. Cancelling Clubhouse workflow...`;
+      core.setFailed(errorMessage);
+      throw new Error(errorMessage);
+    } else {
+      core.debug(
+        `Users are defined in both lists. This may create unexpected results.`
+      );
+    }
+  }
+
+  if (onlyUsers.size > 0) {
+    if (onlyUsers.has(user)) {
+      core.debug(
+        `PR author ${user} is defined in only-users list. Proceeding with Clubhouse workflow...`
+      );
+      return true;
+    } else {
+      core.debug(
+        `You have defined a only-users list, but PR author ${user} isn't in this list. Ignoring user...`
+      );
+      return false;
+    }
+  }
+
+  if (ignoredUsers.size > 0) {
+    if (ignoredUsers.has(user)) {
+      core.debug(
+        `PR author ${user} is defined in ignored-users list. Ignoring user...`
+      );
+      return false;
+    } else {
+      core.debug(
+        `PR author ${user} is NOT defined in ignored-users list. Proceeding with Clubhouse workflow...`
+      );
+      return true;
+    }
+  }
+
+  return true;
+}
+
+export function getUserListAsSet(userList: string): Set<string> {
+  const s = new Set<string>();
+  if (userList) {
+    for (const username of userList.split(",")) {
+      s.add(username.trim());
+    }
   }
   return s;
 }

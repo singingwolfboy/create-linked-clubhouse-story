@@ -3,7 +3,7 @@ import { context } from "@actions/github";
 import { EventPayloads } from "@octokit/webhooks";
 import opened from "./opened";
 import closed from "./closed";
-import { getIgnoredUsers } from "./util";
+import { shouldProcessPullRequestForUser } from "./util";
 
 async function run(): Promise<void> {
   if (context.eventName !== "pull_request") {
@@ -12,12 +12,9 @@ async function run(): Promise<void> {
   }
 
   const payload = context.payload as EventPayloads.WebhookPayloadPullRequest;
-  const ignoredUsers = getIgnoredUsers();
   const author = payload.pull_request.user.login;
-  if (ignoredUsers.has(author)) {
-    core.debug(`ignored pull_request event from user ${author}`);
-    return;
-  }
+
+  if (!shouldProcessPullRequestForUser(author)) return;
 
   switch (payload.action) {
     case "opened":

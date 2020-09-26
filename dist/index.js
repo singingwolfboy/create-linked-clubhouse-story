@@ -142,12 +142,9 @@ function run() {
             return;
         }
         const payload = github_1.context.payload;
-        const ignoredUsers = util_1.getIgnoredUsers();
         const author = payload.pull_request.user.login;
-        if (ignoredUsers.has(author)) {
-            core.debug(`ignored pull_request event from user ${author}`);
+        if (!util_1.shouldProcessPullRequestForUser(author))
             return;
-        }
         switch (payload.action) {
             case "opened":
                 return opened_1.default();
@@ -275,7 +272,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getIgnoredUsers = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
+exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 exports.CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
@@ -289,18 +286,56 @@ exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-\/])?ch(\d+)(?:[-\/].+)?$/;
 function stringFromMap(map) {
     return JSON.stringify(Object.fromEntries(Array.from(map.entries()).sort()));
 }
-function getIgnoredUsers() {
-    const s = new Set();
-    const IGNORED_USERS = core.getInput("ignored-users");
-    if (!IGNORED_USERS) {
-        return s;
+function shouldProcessPullRequestForUser(user) {
+    const ignoredUsers = getUserListAsSet(core.getInput("ignored-users"));
+    const onlyUsers = getUserListAsSet(core.getInput("only-users"));
+    if (ignoredUsers.size === 0 && onlyUsers.size === 0) {
+        core.debug("No users defined in only-users or ignored-users. Proceeding with Clubhouse workflow...");
+        return true;
     }
-    for (const username of IGNORED_USERS.split(",")) {
-        s.add(username.trim());
+    if (onlyUsers.size > 0 && ignoredUsers.size > 0) {
+        if (onlyUsers.has(user) && ignoredUsers.has(user)) {
+            const errorMessage = `PR author ${user} is defined in both ignored-users and only-users lists. Cancelling Clubhouse workflow...`;
+            core.setFailed(errorMessage);
+            throw new Error(errorMessage);
+        }
+        else {
+            core.debug(`Users are defined in both lists. This may create unexpected results.`);
+        }
+    }
+    if (onlyUsers.size > 0) {
+        if (onlyUsers.has(user)) {
+            core.debug(`PR author ${user} is defined in only-users list. Proceeding with Clubhouse workflow...`);
+            return true;
+        }
+        else {
+            core.debug(`You have defined a only-users list, but PR author ${user} isn't in this list. Ignoring user...`);
+            return false;
+        }
+    }
+    if (ignoredUsers.size > 0) {
+        if (ignoredUsers.has(user)) {
+            core.debug(`PR author ${user} is defined in ignored-users list. Ignoring user...`);
+            return false;
+        }
+        else {
+            core.debug(`PR author ${user} is NOT defined in ignored-users list. Proceeding with Clubhouse workflow...`);
+            return true;
+        }
+    }
+    return true;
+}
+exports.shouldProcessPullRequestForUser = shouldProcessPullRequestForUser;
+function getUserListAsSet(userList) {
+    const s = new Set();
+    if (userList) {
+        for (const username of userList.split(",")) {
+            s.add(username.trim());
+        }
     }
     return s;
 }
-exports.getIgnoredUsers = getIgnoredUsers;
+exports.getUserListAsSet = getUserListAsSet;
 function getClubhouseUserId(githubUsername, http) {
     return __awaiter(this, void 0, void 0, function* () {
         const USER_MAP_STRING = core.getInput("user-map");

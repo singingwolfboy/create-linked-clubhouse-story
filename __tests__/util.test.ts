@@ -18,6 +18,8 @@ afterEach(() => {
   delete process.env["INPUT_CLUBHOUSE-TOKEN"];
   delete process.env["INPUT_GITHUB-TOKEN"];
   delete process.env["INPUT_PROJECT-NAME"];
+  delete process.env["INPUT_ONLY-USERS"];
+  delete process.env["INPUT_IGNORED-USERS"];
   nock.restore();
 });
 
@@ -184,4 +186,52 @@ test("getClubhouseURLFromPullRequest comment", async () => {
   expect(url).toEqual("https://app.clubhouse.io/org/story/12345");
 
   scope.done();
+});
+
+test("shouldProcessPullRequestForUser user lists not defined", async () => {
+  expect(util.shouldProcessPullRequestForUser("fake-user-1")).toBeTruthy();
+});
+
+test("shouldProcessPullRequestForUser user in both lists", async () => {
+  const author = "fake-user-1";
+  process.env["INPUT_ONLY-USERS"] = `${author}, fake-user-2`;
+  process.env["INPUT_IGNORED-USERS"] = `${author}, fake-user-3`;
+  expect(() => util.shouldProcessPullRequestForUser(author)).toThrowError(
+    `PR author ${author} is defined in both ignored-users and only-users lists. Cancelling Clubhouse workflow...`
+  );
+});
+
+test("shouldProcessPullRequestForUser both lists defined", async () => {
+  process.env["INPUT_ONLY-USERS"] = "fake-user-1, fake-user-2";
+  process.env["INPUT_IGNORED-USERS"] = "fake-user-3, fake-user-4";
+  expect(() => {
+    util.shouldProcessPullRequestForUser("fake-user-2");
+  }).toBeTruthy();
+});
+
+const usersTestCases = [
+  // [author, userList, expectedResult, userListType]
+  ["fake-user-1", "fake-user-2", "false", "INPUT_ONLY-USERS"],
+  ["fake-user-2", "fake-user-2", "true", "INPUT_ONLY-USERS"],
+  ["fake-user-1", "fake-user-2, fake-user-3", "false", "INPUT_ONLY-USERS"],
+  ["fake-user-2", "fake-user-2, fake-user-3", "true", "INPUT_ONLY-USERS"],
+  ["fake-user-1", "fake-user-2", "true", "INPUT_IGNORED-USERS"],
+  ["fake-user-2", "fake-user-2", "false", "INPUT_IGNORED-USERS"],
+  ["fake-user-1", "fake-user-2, fake-user-3", "true", "INPUT_IGNORED-USERS"],
+  ["fake-user-2", "fake-user-2, fake-user-3", "false", "INPUT_IGNORED-USERS"],
+];
+
+describe("shouldProcessPullRequestForUser", () => {
+  test.each(usersTestCases)(
+    "for author %p and list %p, returns %p for input type %p",
+    (user, userList, expectedResult, inputListType) => {
+      process.env[inputListType] = userList;
+      const result = util.shouldProcessPullRequestForUser(user);
+      if (expectedResult === "true") {
+        expect(result).toBeTruthy();
+      } else if (expectedResult === "false") {
+        expect(result).toBeFalsy();
+      }
+    }
+  );
 });
