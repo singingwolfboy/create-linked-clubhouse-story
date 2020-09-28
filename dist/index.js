@@ -223,7 +223,13 @@ function opened() {
             return;
         }
         const http = new http_client_1.HttpClient();
-        const story = yield util_1.createClubhouseStory(payload, http);
+        const CLUBHOUSE_STORY_TITLE_TEMPLATE = core.getInput("clubhouse-story-title-template");
+        const storyTitle = mustache_1.default.render(CLUBHOUSE_STORY_TITLE_TEMPLATE, {
+            payload,
+        });
+        const CLUBHOUSE_STORY_BODY_TEMPLATE = core.getInput("clubhouse-story-body-template");
+        const storyBody = mustache_1.default.render(CLUBHOUSE_STORY_BODY_TEMPLATE, { payload });
+        const story = yield util_1.createClubhouseStory(payload, http, storyTitle, storyBody);
         if (!story) {
             return;
         }
@@ -471,7 +477,7 @@ function getClubhouseWorkflowState(stateName, http, project) {
     });
 }
 exports.getClubhouseWorkflowState = getClubhouseWorkflowState;
-function createClubhouseStory(payload, http) {
+function createClubhouseStory(payload, http, storyTitle, storyBody) {
     return __awaiter(this, void 0, void 0, function* () {
         const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
             required: true,
@@ -488,8 +494,8 @@ function createClubhouseStory(payload, http) {
             return null;
         }
         const body = {
-            name: payload.pull_request.title,
-            description: payload.pull_request.body,
+            name: storyTitle,
+            description: storyBody,
             project_id: clubhouseProject.id,
             external_tickets: [
                 {
