@@ -270,7 +270,9 @@ export async function getClubhouseWorkflowState(
 
 export async function createClubhouseStory(
   payload: EventPayloads.WebhookPayloadPullRequest,
-  http: HttpClient
+  http: HttpClient,
+  storyTitle: string,
+  storyBody: string
 ): Promise<ClubhouseStory | null> {
   const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
     required: true,
@@ -289,8 +291,8 @@ export async function createClubhouseStory(
   }
 
   const body: ClubhouseCreateStoryBody = {
-    name: payload.pull_request.title,
-    description: payload.pull_request.body,
+    name: storyTitle,
+    description: storyBody,
     project_id: clubhouseProject.id,
     external_tickets: [
       {

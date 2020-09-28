@@ -83,6 +83,32 @@ template output valid Markdown, as shown above.
 If you don't provide a comment template, this action will use this comment template
 by default: `Clubhouse story: {{{ story.app_url }}}`
 
+## Customizing the Clubhouse Story Title and Body
+
+You can customize the Clubhouse **title** or **body** when creating stories using the `clubhouse-story-title-template` and `clubhouse-story-body-template`
+variables, like this:
+
+```yaml
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
+    project-name: Engineering
+    opened-state-name: Started
+    merged-state-name: Done
+    closed-state-name: Abandoned
+    clubhouse-story-title-template: >-
+      {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}} # Would show "<repo name> - <pull request title>"
+    clubhouse-story-body-template: >-
+      New story create for pull request {{{ payload.pull_request.title }}} in repo {{{ payload.repository.name }}}. The body of the PR is {{{ payload.pull_request.body }}}
+```
+
+This comment template is processed using the [Mustache](https://mustache.github.io/)
+templating system. It receives [the Payload object returned from the GitHub API](https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads#pull_request). Note that you may want to use the
+triple mustache syntax to disable HTML escaping.
+
+If you don't provide a title template or body template, this action will use Pull Request Title and Pull Request Body by default. `{{{ payload.pull_request.title }}}` `{{{ payload.pull_request.body }}}`
+
 ## User Map
 
 This Action does its best to automatically assign the created Clubhouse story

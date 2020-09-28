@@ -27,6 +27,16 @@ inputs:
       Clubhouse story is successfully created. The template is populated
       with a `story` variable.
     default: "Clubhouse story: {{{ story.app_url }}}"
+  clubhouse-story-title-template:
+    description: >-
+      A Mustache template used for the story title in Clubhouse. The template is populated with a
+      `payload` variable.
+    default: "{{{ payload.pull_request.title }}}"
+  clubhouse-story-body-template:
+    description: >-
+      A Mustache template used for the story body in Clubhouse. The template is populated with a
+      `payload` variable.
+    default: "{{{ payload.pull_request.body }}}"
   only-users:
     description: Comma-separated list of specific GitHub users to create Clubhouse stories for. 
   ignored-users:
