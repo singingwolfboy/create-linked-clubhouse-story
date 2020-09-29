@@ -100,14 +100,14 @@ variables, like this:
     clubhouse-story-title-template: >-
       {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}} 
     clubhouse-story-body-template: >-
-      New story create for pull request {{{ payload.pull_request.title }}} in repo {{{ payload.repository.name }}}. The body of the PR is {{{ payload.pull_request.body }}}
+      :zap: New story created for pull request [**{{{ payload.pull_request.title }}}**]({{{ payload.pull_request.html }}}) in repo **{{{ payload.repository.name }}}**. The body of the PR is: 
+      {{{ payload.pull_request.body }}}
 ```
 
-This comment template is processed using the [Mustache](https://mustache.github.io/)
-templating system. It receives [the Payload object returned from the GitHub API](https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads#pull_request). Note that you may want to use the
-triple mustache syntax to disable HTML escaping.
+The story title and body templates are processed using the [Mustache](https://mustache.github.io/)
+templating system. It receives [the Payload object returned from the GitHub API](https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads#pull_request). Note that you may want to use the triple mustache syntax to disable HTML escaping. Also Clubhouse supports full Markdown formatting, emojis, and @ mentions. Feel free to use them to your heart's desire. :heart_eyes_cat:
 
-If you don't provide a title template or body template, this action will use Pull Request Title and Pull Request Body by default. `{{{ payload.pull_request.title }}}` `{{{ payload.pull_request.body }}}`
+If you don't provide a title or body template, this action will simply use the Pull Request Title (`{{{ payload.pull_request.title }}}`) and Pull Request Body (`{{{ payload.pull_request.body }}}`) by default.  
 
 ## User Map
 
