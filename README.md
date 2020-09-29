@@ -100,8 +100,11 @@ variables, like this:
     clubhouse-story-title-template: >-
       {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}} 
     clubhouse-story-body-template: >-
-      :zap: New story created for pull request [**{{{ payload.pull_request.title }}}**]({{{ payload.pull_request.html }}}) in repo **{{{ payload.repository.name }}}**. The body of the PR is: 
-      {{{ payload.pull_request.body }}}
+      :zap: New story created for pull request [**{{{ payload.pull_request.title }}}**]({{{ payload.pull_request.html_url }}}) 
+      in repo **{{{ payload.repository.name }}}**. 
+      {{{ #payload.pull_request.body }}}
+        The body of the PR is: {{{ payload.pull_request.body }}}
+      {{{ /payload.pull_request.body }}}
 ```
 
 The story title and body templates are processed using the [Mustache](https://mustache.github.io/)
