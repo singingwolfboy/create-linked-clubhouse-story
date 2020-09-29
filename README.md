@@ -98,7 +98,7 @@ variables, like this:
     merged-state-name: Done
     closed-state-name: Abandoned
     clubhouse-story-title-template: >-
-      {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}} # Would show "<repo name> - <pull request title>"
+      {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}} 
     clubhouse-story-body-template: >-
       New story create for pull request {{{ payload.pull_request.title }}} in repo {{{ payload.repository.name }}}. The body of the PR is {{{ payload.pull_request.body }}}
 ```
