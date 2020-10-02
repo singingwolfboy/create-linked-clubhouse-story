@@ -223,13 +223,7 @@ function opened() {
             return;
         }
         const http = new http_client_1.HttpClient();
-        const CLUBHOUSE_STORY_TITLE_TEMPLATE = core.getInput("clubhouse-story-title-template");
-        const storyTitle = mustache_1.default.render(CLUBHOUSE_STORY_TITLE_TEMPLATE, {
-            payload,
-        });
-        const CLUBHOUSE_STORY_BODY_TEMPLATE = core.getInput("clubhouse-story-body-template");
-        const storyBody = mustache_1.default.render(CLUBHOUSE_STORY_BODY_TEMPLATE, { payload });
-        const story = yield util_1.createClubhouseStory(payload, http, storyTitle, storyBody);
+        const story = yield util_1.createClubhouseStory(payload, http);
         if (!story) {
             return;
         }
@@ -277,12 +271,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
+const mustache_1 = __importDefault(__webpack_require__(272));
 exports.CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
-exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-\/])?ch(\d+)(?:[-\/].+)?$/;
+exports.CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-/])?ch(\d+)(?:[-/].+)?$/;
 /**
  * Convert a Map to a sorted string representation. Useful for debugging.
  *
@@ -477,15 +475,15 @@ function getClubhouseWorkflowState(stateName, http, project) {
     });
 }
 exports.getClubhouseWorkflowState = getClubhouseWorkflowState;
-function createClubhouseStory(payload, http, storyTitle, storyBody) {
+function createClubhouseStory(payload, http) {
     return __awaiter(this, void 0, void 0, function* () {
-        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
-            required: true,
-        });
-        const PROJECT_NAME = core.getInput("project-name", {
-            required: true,
-        });
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", { required: true });
+        const PROJECT_NAME = core.getInput("project-name", { required: true });
         const STATE_NAME = core.getInput("opened-state-name");
+        const TITLE_TEMPLATE = core.getInput("story-title-template");
+        const title = mustache_1.default.render(TITLE_TEMPLATE, { payload });
+        const DESCRIPTION_TEMPLATE = core.getInput("story-description-template");
+        const description = mustache_1.default.render(DESCRIPTION_TEMPLATE, { payload });
         const githubUsername = payload.pull_request.user.login;
         const clubhouseUserId = yield getClubhouseUserId(githubUsername, http);
         const clubhouseProject = yield getClubhouseProjectByName(PROJECT_NAME, http);
@@ -494,8 +492,8 @@ function createClubhouseStory(payload, http, storyTitle, storyBody) {
             return null;
         }
         const body = {
-            name: storyTitle,
-            description: storyBody,
+            name: title,
+            description,
             project_id: clubhouseProject.id,
             external_tickets: [
                 {

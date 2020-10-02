@@ -33,24 +33,7 @@ export default async function opened(): Promise<void> {
 
   const http = new HttpClient();
 
-  const CLUBHOUSE_STORY_TITLE_TEMPLATE = core.getInput(
-    "clubhouse-story-title-template"
-  );
-  const storyTitle = Mustache.render(CLUBHOUSE_STORY_TITLE_TEMPLATE, {
-    payload,
-  });
-
-  const CLUBHOUSE_STORY_BODY_TEMPLATE = core.getInput(
-    "clubhouse-story-body-template"
-  );
-  const storyBody = Mustache.render(CLUBHOUSE_STORY_BODY_TEMPLATE, { payload });
-
-  const story = await createClubhouseStory(
-    payload,
-    http,
-    storyTitle,
-    storyBody
-  );
+  const story = await createClubhouseStory(payload, http);
   if (!story) {
     return;
   }

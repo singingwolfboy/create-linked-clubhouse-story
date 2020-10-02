@@ -85,11 +85,11 @@ by default: `Clubhouse story: {{{ story.app_url }}}`
 
 ## Customizing the Clubhouse Story Title and Body
 
-You can customize the Clubhouse **title** or **body** when creating stories using the `clubhouse-story-title-template` and `clubhouse-story-body-template`
+You can customize the Clubhouse **title** and **description** when creating stories using the `story-title-template` and `story-description-template`
 variables, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -97,9 +97,9 @@ variables, like this:
     opened-state-name: Started
     merged-state-name: Done
     closed-state-name: Abandoned
-    clubhouse-story-title-template: >-
+    story-title-template: >-
       {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}} 
-    clubhouse-story-body-template: >-
+    story-description-template: >-
       :zap: New story created for pull request [**{{{ payload.pull_request.title }}}**]({{{ payload.pull_request.html_url }}}) 
       in repo **{{{ payload.repository.name }}}**. 
       {{{ #payload.pull_request.body }}}
