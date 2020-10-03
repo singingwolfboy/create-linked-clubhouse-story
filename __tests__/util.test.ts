@@ -96,6 +96,108 @@ test("getClubhouseWorkflowState", async () => {
   scope.done();
 });
 
+describe("createClubhouseStory", () => {
+  let scope: nock.Scope;
+  const http = new HttpClient();
+  const payload = {
+    action: "opened",
+    number: 123,
+    pull_request: {
+      url: "https://api.github.com/repos/octocat/Hello-World/pulls/1347",
+      html_url: "https://github.com/octocat/Hello-World/pull/1347",
+      id: 1,
+      number: 1347,
+      state: "open",
+      user: {
+        login: "octocat",
+      },
+      title: "Amazing new feature",
+      body: "Please pull these awesome changes in!",
+    },
+    repository: {
+      name: "Hello-World",
+      owner: {
+        login: "octocat",
+      },
+    },
+  };
+
+  beforeEach(() => {
+    process.env["INPUT_USER-MAP"] = JSON.stringify({ octocat: "abc" });
+    process.env["INPUT_PROJECT-NAME"] = "fake-project";
+    process.env["INPUT_STORY-TITLE-TEMPLATE"] =
+      "{{{ payload.pull_request.title }}}";
+    process.env["INPUT_STORY-DESCRIPTION-TEMPLATE"] =
+      "{{{ payload.pull_request.body }}}";
+
+    scope = nock("https://api.clubhouse.io")
+      .get("/api/v3/projects")
+      .query(true)
+      .reply(200, [{ id: "abc", name: "fake-project" }]);
+  });
+
+  afterEach(() => {
+    delete process.env["INPUT_USER-MAP"];
+    delete process.env["INPUT_PROJECT-NAME"];
+    delete process.env["INPUT_STORY-TITLE-TEMPLATE"];
+    delete process.env["INPUT_STORY-DESCRIPTION-TEMPLATE"];
+    scope.done();
+  });
+
+  test("with no templates", async () => {
+    scope
+      .post("/api/v3/stories", (body) => {
+        expect(body.name).toEqual("Amazing new feature");
+        expect(body.description).toEqual(
+          "Please pull these awesome changes in!"
+        );
+        return true;
+      })
+      .query(true)
+      .reply(200, { id: 1 });
+    await util.createClubhouseStory(payload as any, http);
+  });
+
+  test("with title template", async () => {
+    process.env["INPUT_STORY-TITLE-TEMPLATE"] =
+      "{{ payload.repository.name }} - {{ payload.pull_request.title }}";
+    scope
+      .post("/api/v3/stories", (body) => {
+        expect(body.name).toEqual("Hello-World - Amazing new feature");
+        expect(body.description).toEqual(
+          "Please pull these awesome changes in!"
+        );
+        return true;
+      })
+      .query(true)
+      .reply(200, { id: 1 });
+    await util.createClubhouseStory(payload as any, http);
+  });
+
+  test("with description template", async () => {
+    process.env[
+      "INPUT_STORY-DESCRIPTION-TEMPLATE"
+    ] = `:zap: New story created for pull request [**{{{ payload.pull_request.title }}}**]({{{ payload.pull_request.html_url }}}) in repo **{{{ payload.repository.name }}}**.
+{{{ #payload.pull_request.body }}}
+  The body of the PR is: {{{ payload.pull_request.body }}}
+{{{ /payload.pull_request.body }}}`;
+    scope
+      .post("/api/v3/stories", (body) => {
+        expect(body.name).toEqual("Amazing new feature");
+        expect(body.description).toEqual(
+          `:zap: New story created for pull request [**Amazing new feature**](https://github.com/octocat/Hello-World/pull/1347) in repo **Hello-World**.
+
+  The body of the PR is: Please pull these awesome changes in!
+`
+        );
+        return true;
+      })
+      .query(true)
+      .reply(200, { id: 1 });
+    await util.createClubhouseStory(payload as any, http);
+  });
+});
+
 test.each([
   ["ch1", "1"],
   ["ch89/something", "89"],
