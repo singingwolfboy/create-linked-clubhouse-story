@@ -169,7 +169,7 @@ You can also add a list of GitHub `only-users` for this integration. This works 
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.4
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
