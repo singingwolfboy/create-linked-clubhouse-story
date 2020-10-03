@@ -32,6 +32,7 @@ export default async function opened(): Promise<void> {
   }
 
   const http = new HttpClient();
+
   const story = await createClubhouseStory(payload, http);
   if (!story) {
     return;

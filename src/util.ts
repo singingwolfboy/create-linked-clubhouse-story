@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { EventPayloads } from "@octokit/webhooks";
 import { HttpClient } from "@actions/http-client";
+import Mustache from "mustache";
 import {
   ClubhouseMember,
   ClubhouseProject,
@@ -272,13 +273,14 @@ export async function createClubhouseStory(
   payload: EventPayloads.WebhookPayloadPullRequest,
   http: HttpClient
 ): Promise<ClubhouseStory | null> {
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
-    required: true,
-  });
-  const PROJECT_NAME = core.getInput("project-name", {
-    required: true,
-  });
+  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", { required: true });
+  const PROJECT_NAME = core.getInput("project-name", { required: true });
   const STATE_NAME = core.getInput("opened-state-name");
+  const TITLE_TEMPLATE = core.getInput("story-title-template");
+  const title = Mustache.render(TITLE_TEMPLATE, { payload });
+
+  const DESCRIPTION_TEMPLATE = core.getInput("story-description-template");
+  const description = Mustache.render(DESCRIPTION_TEMPLATE, { payload });
 
   const githubUsername = payload.pull_request.user.login;
   const clubhouseUserId = await getClubhouseUserId(githubUsername, http);
@@ -289,8 +291,8 @@ export async function createClubhouseStory(
   }
 
   const body: ClubhouseCreateStoryBody = {
-    name: payload.pull_request.title,
-    description: payload.pull_request.body,
+    name: title,
+    description,
     project_id: clubhouseProject.id,
     external_tickets: [
       {

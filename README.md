@@ -83,6 +83,35 @@ template output valid Markdown, as shown above.
 If you don't provide a comment template, this action will use this comment template
 by default: `Clubhouse story: {{{ story.app_url }}}`
 
+## Customizing the Clubhouse Story Title and Body
+
+You can customize the Clubhouse **title** and **description** when creating stories using the `story-title-template` and `story-description-template`
+variables, like this:
+
+```yaml
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
+    project-name: Engineering
+    opened-state-name: Started
+    merged-state-name: Done
+    closed-state-name: Abandoned
+    story-title-template: >-
+      {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}} 
+    story-description-template: >-
+      :zap: New story created for pull request [**{{{ payload.pull_request.title }}}**]({{{ payload.pull_request.html_url }}}) 
+      in repo **{{{ payload.repository.name }}}**. 
+      {{{ #payload.pull_request.body }}}
+        The body of the PR is: {{{ payload.pull_request.body }}}
+      {{{ /payload.pull_request.body }}}
+```
+
+The story title and body templates are processed using the [Mustache](https://mustache.github.io/)
+templating system. It receives [the Payload object returned from the GitHub API](https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads#pull_request). Note that you may want to use the triple mustache syntax to disable HTML escaping. Also Clubhouse supports full Markdown formatting, emojis, and @ mentions. Feel free to use them to your heart's desire. :heart_eyes_cat:
+
+If you don't provide a title or body template, this action will simply use the Pull Request Title (`{{{ payload.pull_request.title }}}`) and Pull Request Body (`{{{ payload.pull_request.body }}}`) by default.  
+
 ## User Map
 
 This Action does its best to automatically assign the created Clubhouse story
