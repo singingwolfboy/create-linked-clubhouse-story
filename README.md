@@ -23,7 +23,7 @@ jobs:
   clubhouse:
     runs-on: ubuntu-latest
     steps:
-      - uses: singingwolfboy/create-linked-clubhouse-story@v1.5
+      - uses: singingwolfboy/create-linked-clubhouse-story@v1.6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -59,7 +59,7 @@ You can customize the comment posted on pull requests using the `comment-templat
 variable, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -89,7 +89,7 @@ You can customize the Clubhouse **title** and **description** when creating stor
 variables, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -98,10 +98,10 @@ variables, like this:
     merged-state-name: Done
     closed-state-name: Abandoned
     story-title-template: >-
-      {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}} 
+      {{{ payload.repository.name }}} - {{{ payload.pull_request.title }}}
     story-description-template: >-
-      :zap: New story created for pull request [**{{{ payload.pull_request.title }}}**]({{{ payload.pull_request.html_url }}}) 
-      in repo **{{{ payload.repository.name }}}**. 
+      :zap: New story created for pull request [**{{{ payload.pull_request.title }}}**]({{{ payload.pull_request.html_url }}})
+      in repo **{{{ payload.repository.name }}}**.
       {{{ #payload.pull_request.body }}}
         The body of the PR is: {{{ payload.pull_request.body }}}
       {{{ /payload.pull_request.body }}}
@@ -110,7 +110,7 @@ variables, like this:
 The story title and body templates are processed using the [Mustache](https://mustache.github.io/)
 templating system. It receives [the Payload object returned from the GitHub API](https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads#pull_request). Note that you may want to use the triple mustache syntax to disable HTML escaping. Also Clubhouse supports full Markdown formatting, emojis, and @ mentions. Feel free to use them to your heart's desire. :heart_eyes_cat:
 
-If you don't provide a title or body template, this action will simply use the Pull Request Title (`{{{ payload.pull_request.title }}}`) and Pull Request Body (`{{{ payload.pull_request.body }}}`) by default.  
+If you don't provide a title or body template, this action will simply use the Pull Request Title (`{{{ payload.pull_request.title }}}`) and Pull Request Body (`{{{ payload.pull_request.body }}}`) by default.
 
 ## User Map
 
@@ -127,7 +127,7 @@ map GitHub users to Clubhouse users. The user map should be passed in the
 formatted string. Here's an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -155,7 +155,7 @@ You can also add a list of GitHub users to ignore for this integration by using 
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.5
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -165,7 +165,7 @@ Multiple users should be separated by commas.
 
 ## Only Users
 
-You can also add a list of GitHub `only-users` for this integration. This works opposite of the ignored users list above. For example, if you wanted only PRs from a specific GitHub user such as dependabot PRs. 
+You can also add a list of GitHub `only-users` for this integration. This works opposite of the ignored users list above. For example, if you wanted only PRs from a specific GitHub user such as dependabot PRs.
 Multiple users should be separated by commas.
 
 ```yaml
