@@ -151,7 +151,7 @@ you need to look up the UUID for the `Member` object.
 
 ### Detailed Instructions
 
-1. Open page: Clubhouse User Directory
+1. Open page: [Clubhouse User Directory](https://app.clubhouse.io/settings/users)
 2. Open up the Developer Tools window (F12 for Chrome)
 3. Refresh the page
 4. Navigate to the `Network` tab in the Developer Tools window
