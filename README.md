@@ -149,6 +149,19 @@ and examine the API response to find the `id` for each user.
 Note that Clubhouse makes a distinction between a `User` and a `Member`:
 you need to look up the UUID for the `Member` object.
 
+### Detailed Instructions
+
+    1. Open page: Clubhouse User Directory
+    2. Open up the Developer Tools window (F12 for Chrome)
+    3. Refresh the page
+    4. Navigate to the `Network` tab in the Developer Tools window
+    5. Filter by `members`
+    6. Select `members` under the `Name` frame
+    7. Right click and select `Copy Response`, paste into a text editor and locate your name or email address
+        1. The response is paged, your UUID could be in subsequent responses after the first one. Check appropriately depending on where your name lies in alphabetical order
+    8. Ensure that `entity_type` is `member`, copy the `id`  section (e.g. `"id": "5f9719a7-326e-490a-a04f-58698c68262e``"`) field that is right before the `profile` section
+    9. Complete regular steps for branching and submitting a PR
+
 ## Ignored Users
 
 You can also add a list of GitHub users to ignore for this integration by using the `ignored-users` input.
