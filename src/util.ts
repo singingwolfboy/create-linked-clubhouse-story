@@ -290,6 +290,10 @@ export async function createClubhouseStory(
     return null;
   }
 
+  const LABEL_MAP = core.getInput("label-iteration-group-map");
+  const githubLabels = payload.pull_request.labels;
+  const clubhouseIterationGroupMap = getClubhouseIterationGroupMap(githubLabels);
+  const clubhouseIterationId = await getLatestClubhouseIterationForGroup(clubhouseIterationGroupMap, http);
   const body: ClubhouseCreateStoryBody = {
     name: title,
     description,
@@ -303,6 +307,9 @@ export async function createClubhouseStory(
   };
   if (clubhouseUserId) {
     body.owner_ids = [clubhouseUserId];
+  }
+  if (clubhouseIterationId) {
+    body.iteration_ids = clubhouseIterationId;
   }
   if (STATE_NAME) {
     const workflowState = await getClubhouseWorkflowState(
@@ -449,4 +456,51 @@ export async function updateClubhouseStoryById(
     );
     return null;
   }
+}
+
+export async function getLatestClubhouseIterationForGroup(
+  groupMap: Record<string, string>,
+  http: HttpClient
+): Promise<ClubhouseIteration | undefined> {
+  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+    required: true,
+  });
+  try {
+    if (!groupMap || !groupMap.groupId) {
+      return null;
+    }
+    const iterationsResponse = await http.getJson<ClubhouseProject[]>(
+      `https://api.clubhouse.io/api/v3/iterations?token=${CLUBHOUSE_TOKEN}`
+    );
+    const iterations = iterationsResponse.result;
+    if (!iterations) {
+      core.setFailed(
+        `HTTP ${iterationsResponse.statusCode} https://api.clubhouse.io/api/v3/iterations`
+      );
+      return;
+    }
+    var iterationsForGroup = iterations.filter((iteration) => iteration.group_ids.includes(groupMap.groupId) && iteration.status === "started");
+    if (groupMap.excludeName) {
+      iterationsForGroup = iterationsForGroup.filter((iteration) => !iteration.name.includes(groupMap.excludeName));
+    }
+    // sort most-recently updated first
+    const sortedIterations = iterationsForGroup.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    return sortedIterations[0];
+  } catch (err) {
+    core.setFailed(
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/iterations\n${err.message}`
+    );
+    return;
+  }
+}
+
+export function getClubhouseIterationGroupMap(
+  githubLabels: List<string>,
+): Map<string, string> | undefined {
+  for (let label in githubLabels) {
+    if (LABEL_MAP[label]) {
+      return LABEL_MAP[label];
+    }
+  }
+  return null;
 }
