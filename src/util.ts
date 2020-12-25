@@ -11,6 +11,7 @@ import {
   ClubhouseUpdateStoryBody,
   ClubhouseWorkflowState,
   ClubhouseTeam,
+  ClubhouseIteration,
 } from "./types";
 
 export const CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
@@ -290,10 +291,9 @@ export async function createClubhouseStory(
     return null;
   }
 
-  const LABEL_MAP = core.getInput("label-iteration-group-map");
-  const githubLabels = payload.pull_request.labels;
+  const githubLabels = payload.pull_request.labels.map((label) => label.name);
   const clubhouseIterationGroupMap = getClubhouseIterationGroupMap(githubLabels);
-  const clubhouseIterationId = await getLatestClubhouseIterationForGroup(clubhouseIterationGroupMap, http);
+  const clubhouseIteration = await getLatestClubhouseIterationForGroup(clubhouseIterationGroupMap, http);
   const body: ClubhouseCreateStoryBody = {
     name: title,
     description,
@@ -308,8 +308,8 @@ export async function createClubhouseStory(
   if (clubhouseUserId) {
     body.owner_ids = [clubhouseUserId];
   }
-  if (clubhouseIterationId) {
-    body.iteration_ids = clubhouseIterationId;
+  if (clubhouseIteration) {
+    body.iteration_id = clubhouseIteration.id;
   }
   if (STATE_NAME) {
     const workflowState = await getClubhouseWorkflowState(
@@ -459,7 +459,7 @@ export async function updateClubhouseStoryById(
 }
 
 export async function getLatestClubhouseIterationForGroup(
-  groupMap: Record<string, string>,
+  groupMap: Record<string, string> | undefined,
   http: HttpClient
 ): Promise<ClubhouseIteration | undefined> {
   const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
@@ -467,9 +467,9 @@ export async function getLatestClubhouseIterationForGroup(
   });
   try {
     if (!groupMap || !groupMap.groupId) {
-      return null;
+      return;
     }
-    const iterationsResponse = await http.getJson<ClubhouseProject[]>(
+    const iterationsResponse = await http.getJson<ClubhouseIteration[]>(
       `https://api.clubhouse.io/api/v3/iterations?token=${CLUBHOUSE_TOKEN}`
     );
     const iterations = iterationsResponse.result;
@@ -484,7 +484,7 @@ export async function getLatestClubhouseIterationForGroup(
       iterationsForGroup = iterationsForGroup.filter((iteration) => !iteration.name.includes(groupMap.excludeName));
     }
     // sort most-recently updated first
-    const sortedIterations = iterationsForGroup.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    const sortedIterations = iterationsForGroup.sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at));
     return sortedIterations[0];
   } catch (err) {
     core.setFailed(
@@ -495,12 +495,23 @@ export async function getLatestClubhouseIterationForGroup(
 }
 
 export function getClubhouseIterationGroupMap(
-  githubLabels: List<string>,
-): Map<string, string> | undefined {
-  for (let label in githubLabels) {
-    if (LABEL_MAP[label]) {
-      return LABEL_MAP[label];
+  githubLabels: Array<string>,
+): Record<string, string> | undefined {
+
+  const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
+  if (LABEL_MAP_STRING) {
+    try {
+      const LABEL_MAP = JSON.parse(LABEL_MAP_STRING) as Record<string, Record<string, string>>;
+
+      for (let label in githubLabels) {
+        if (LABEL_MAP[label]) {
+          return LABEL_MAP[label];
+        }
+      }
+    } catch (err) {
+      core.warning("`label-iteration-group-map` is not valid JSON");
+      return;
     }
   }
-  return null;
+  return;
 }
