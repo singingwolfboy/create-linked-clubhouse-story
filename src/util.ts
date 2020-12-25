@@ -291,9 +291,16 @@ export async function createClubhouseStory(
     return null;
   }
 
-  const githubLabels = (payload.pull_request.labels || []).map((label) => label.name);
-  const clubhouseIterationGroupMap = getClubhouseIterationGroupMap(githubLabels);
-  const clubhouseIteration = await getLatestClubhouseIterationForGroup(clubhouseIterationGroupMap, http);
+  const githubLabels = (payload.pull_request.labels || []).map(
+    (label) => label.name
+  );
+  const clubhouseIterationGroupMap = getClubhouseIterationGroupMap(
+    githubLabels
+  );
+  const clubhouseIteration = await getLatestClubhouseIterationForGroup(
+    clubhouseIterationGroupMap,
+    http
+  );
   const body: ClubhouseCreateStoryBody = {
     name: title,
     description,
@@ -479,12 +486,20 @@ export async function getLatestClubhouseIterationForGroup(
       );
       return;
     }
-    var iterationsForGroup = iterations.filter((iteration) => iteration.group_ids.includes(groupMap.groupId) && iteration.status === "started");
+    let iterationsForGroup = iterations.filter(
+      (iteration) =>
+        iteration.group_ids.includes(groupMap.groupId) &&
+        iteration.status === "started"
+    );
     if (groupMap.excludeName) {
-      iterationsForGroup = iterationsForGroup.filter((iteration) => !iteration.name.includes(groupMap.excludeName));
+      iterationsForGroup = iterationsForGroup.filter(
+        (iteration) => !iteration.name.includes(groupMap.excludeName)
+      );
     }
     // sort most-recently updated first
-    const sortedIterations = iterationsForGroup.sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at));
+    const sortedIterations = iterationsForGroup.sort(
+      (a, b) => +new Date(b.updated_at) - +new Date(a.updated_at)
+    );
     return sortedIterations[0];
   } catch (err) {
     core.setFailed(
@@ -495,15 +510,17 @@ export async function getLatestClubhouseIterationForGroup(
 }
 
 export function getClubhouseIterationGroupMap(
-  githubLabels: Array<string>,
+  githubLabels: Array<string>
 ): Record<string, string> | undefined {
-
   const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
   if (LABEL_MAP_STRING) {
     try {
-      const LABEL_MAP = JSON.parse(LABEL_MAP_STRING) as Record<string, Record<string, string>>;
+      const LABEL_MAP = JSON.parse(LABEL_MAP_STRING) as Record<
+        string,
+        Record<string, string>
+      >;
 
-      for (let label in githubLabels) {
+      for (const label in githubLabels) {
         if (LABEL_MAP[label]) {
           return LABEL_MAP[label];
         }
