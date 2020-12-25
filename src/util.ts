@@ -291,7 +291,7 @@ export async function createClubhouseStory(
     return null;
   }
 
-  const githubLabels = payload.pull_request.labels.map((label) => label.name);
+  const githubLabels = (payload.pull_request.labels || []).map((label) => label.name);
   const clubhouseIterationGroupMap = getClubhouseIterationGroupMap(githubLabels);
   const clubhouseIteration = await getLatestClubhouseIterationForGroup(clubhouseIterationGroupMap, http);
   const body: ClubhouseCreateStoryBody = {
