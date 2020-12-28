@@ -11,6 +11,7 @@ import {
   ClubhouseUpdateStoryBody,
   ClubhouseWorkflowState,
   ClubhouseTeam,
+  ClubhouseIterationSlim,
 } from "./types";
 
 export const CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
@@ -18,6 +19,11 @@ export const CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-/])?ch(\d+)(?:[-/].+)?$/;
 
 interface Stringable {
   toString(): string;
+}
+
+interface IterationInfo {
+  groupId: string;
+  excludeName?: string;
 }
 
 /**
@@ -290,6 +296,10 @@ export async function createClubhouseStory(
     return null;
   }
 
+  const githubLabels = (payload.pull_request.labels || []).map(
+    (label) => label.name
+  );
+  const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
   const body: ClubhouseCreateStoryBody = {
     name: title,
     description,
@@ -303,6 +313,15 @@ export async function createClubhouseStory(
   };
   if (clubhouseUserId) {
     body.owner_ids = [clubhouseUserId];
+  }
+  if (clubhouseIterationInfo) {
+    const clubhouseIteration = await getLatestMatchingClubhouseIteration(
+      clubhouseIterationInfo,
+      http
+    );
+    if (clubhouseIteration) {
+      body.iteration_id = clubhouseIteration.id;
+    }
   }
   if (STATE_NAME) {
     const workflowState = await getClubhouseWorkflowState(
@@ -449,4 +468,84 @@ export async function updateClubhouseStoryById(
     );
     return null;
   }
+}
+
+export async function getLatestMatchingClubhouseIteration(
+  iterationInfo: IterationInfo,
+  http: HttpClient
+): Promise<ClubhouseIterationSlim | undefined> {
+  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+    required: true,
+  });
+  try {
+    const iterationsResponse = await http.getJson<ClubhouseIterationSlim[]>(
+      `https://api.clubhouse.io/api/v3/iterations?token=${CLUBHOUSE_TOKEN}`
+    );
+    const iterations = iterationsResponse.result;
+    if (!iterations) {
+      core.setFailed(
+        `HTTP ${iterationsResponse.statusCode} https://api.clubhouse.io/api/v3/iterations`
+      );
+      return;
+    }
+    const iterationsForGroup = iterations.filter((iteration) => {
+      if (iteration.status !== "started") {
+        return false;
+      }
+      if (!iteration.group_ids.includes(iterationInfo.groupId)) {
+        return false;
+      }
+      if (
+        iterationInfo.excludeName &&
+        iteration.name.includes(iterationInfo.excludeName)
+      ) {
+        return false;
+      }
+      return true;
+    });
+    if (iterationsForGroup.length === 0) {
+      return;
+    }
+    // sort most-recently updated first
+    const sortedIterations = iterationsForGroup.sort(
+      (a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at)
+    );
+    return sortedIterations[0];
+  } catch (err) {
+    core.setFailed(
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/iterations\n${err.message}`
+    );
+    return;
+  }
+}
+
+export function getClubhouseIterationInfo(
+  githubLabels: string[]
+): IterationInfo | undefined {
+  const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
+  if (LABEL_MAP_STRING) {
+    try {
+      const LABEL_MAP = JSON.parse(LABEL_MAP_STRING) as Record<
+        string,
+        IterationInfo
+      >;
+
+      for (const label in githubLabels) {
+        const info = LABEL_MAP[label];
+        if (info) {
+          if (!info.groupId) {
+            core.warning(
+              `missing "groupId" key from "${label}" label in "label-iteration-group-map"; skipping`
+            );
+            continue;
+          }
+          return info;
+        }
+      }
+    } catch (err) {
+      core.warning("`label-iteration-group-map` is not valid JSON");
+      return;
+    }
+  }
+  return;
 }

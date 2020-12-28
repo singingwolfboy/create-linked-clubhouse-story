@@ -337,3 +337,157 @@ describe("shouldProcessPullRequestForUser", () => {
     }
   );
 });
+
+describe("getLatestMatchingClubhouseIteration", () => {
+  test("happy path", async () => {
+    const scope = nock("https://api.clubhouse.io")
+      .get("/api/v3/iterations")
+      .query(true)
+      .reply(200, [
+        {
+          id: 1,
+          name: "abc",
+          status: "started",
+          group_ids: ["123"],
+          updated_at: "2020-01-01T12:00:00",
+        },
+      ]);
+
+    const iterationInfo = { groupId: "123" };
+    const http = new HttpClient();
+    const result = await util.getLatestMatchingClubhouseIteration(
+      iterationInfo,
+      http
+    );
+    expect(result).toBeTruthy();
+    expect(result!.id).toEqual(1);
+  });
+
+  test("no iterations", async () => {
+    const scope = nock("https://api.clubhouse.io")
+      .get("/api/v3/iterations")
+      .query(true)
+      .reply(200, []);
+
+    const iterationInfo = { groupId: "123" };
+    const http = new HttpClient();
+    const result = await util.getLatestMatchingClubhouseIteration(
+      iterationInfo,
+      http
+    );
+    expect(result).toBeUndefined();
+  });
+
+  test("matching unstarted iteration", async () => {
+    const scope = nock("https://api.clubhouse.io")
+      .get("/api/v3/iterations")
+      .query(true)
+      .reply(200, [
+        {
+          id: 1,
+          name: "abc",
+          status: "unstarted",
+          group_ids: ["123"],
+          updated_at: "2020-01-01T12:00:00",
+        },
+      ]);
+
+    const iterationInfo = { groupId: "123" };
+    const http = new HttpClient();
+    const result = await util.getLatestMatchingClubhouseIteration(
+      iterationInfo,
+      http
+    );
+    expect(result).toBeUndefined();
+  });
+
+  test("multiple matches", async () => {
+    const scope = nock("https://api.clubhouse.io")
+      .get("/api/v3/iterations")
+      .query(true)
+      .reply(200, [
+        {
+          id: 1,
+          name: "abc",
+          status: "started",
+          group_ids: ["123"],
+          updated_at: "2020-01-01T12:00:00",
+        },
+        {
+          id: 2,
+          name: "def",
+          status: "started",
+          group_ids: ["123"],
+          updated_at: "2020-01-02T12:00:00",
+        },
+        {
+          id: 3,
+          name: "hij",
+          status: "started",
+          group_ids: ["123"],
+          updated_at: "2020-01-03T12:00:00",
+        },
+        {
+          id: 4,
+          name: "klm",
+          status: "started",
+          group_ids: [],
+          updated_at: "2020-01-04T12:00:00",
+        },
+      ]);
+
+    const iterationInfo = { groupId: "123" };
+    const http = new HttpClient();
+    const result = await util.getLatestMatchingClubhouseIteration(
+      iterationInfo,
+      http
+    );
+    expect(result).toBeTruthy();
+    expect(result!.id).toEqual(3);
+  });
+
+  test("excludes", async () => {
+    const scope = nock("https://api.clubhouse.io")
+      .get("/api/v3/iterations")
+      .query(true)
+      .reply(200, [
+        {
+          id: 1,
+          name: "abc",
+          status: "started",
+          group_ids: ["123"],
+          updated_at: "2020-01-01T12:00:00",
+        },
+        {
+          id: 2,
+          name: "def",
+          status: "started",
+          group_ids: ["123"],
+          updated_at: "2020-01-02T12:00:00",
+        },
+        {
+          id: 3,
+          name: "hij",
+          status: "started",
+          group_ids: ["123"],
+          updated_at: "2020-01-03T12:00:00",
+        },
+        {
+          id: 4,
+          name: "klm",
+          status: "started",
+          group_ids: [],
+          updated_at: "2020-01-04T12:00:00",
+        },
+      ]);
+
+    const iterationInfo = { groupId: "123", excludeName: "hij" };
+    const http = new HttpClient();
+    const result = await util.getLatestMatchingClubhouseIteration(
+      iterationInfo,
+      http
+    );
+    expect(result).toBeTruthy();
+    expect(result!.id).toEqual(2);
+  });
+});

@@ -429,3 +429,27 @@ export interface ClubhouseUpdateStoryBody {
   story_type?: "bug" | "chore" | "feature";
   workflow_state_id?: number;
 }
+
+/** An Iteration is a defined, time-boxed period of development for a collection of Stories. In Clubhouse, Iterations can span multiple Epics, Projects, and Workflows. Iterations and sprints are often interchangeable terms. */
+export interface ClubhouseIteration {
+  entity_type: "iteration";
+  app_url: string;
+  created_at: string;
+  description: string;
+  end_date: string;
+  follower_ids: string[];
+  group_ids: string[];
+  group_mention_ids: string[];
+  id: number;
+  labels: ClubhouseLabel[];
+  member_mention_ids: string[];
+  mention_ids: string[];
+  name: string;
+  start_date: string;
+  stats: ClubhouseProjectStats;
+  status: "unstarted" | "started" | "done";
+  updated_at: string;
+}
+
+/** IterationSlim represents the same resource as an Iteration, but is more light-weight. */
+export type ClubhouseIterationSlim = Omit<ClubhouseIteration, "description">;

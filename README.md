@@ -176,3 +176,29 @@ Multiple users should be separated by commas.
     project-name: Engineering
     only-users: dependabot
 ```
+
+## Iteration Support
+
+You can also automatically add newly created tickets to a Clubhouse Iteration.
+Since iterations are generally team-dependent and only relevant for a period of
+time, this is configured through a map that identifies the groupId of which the
+integration will pick the most recently updated Iteration marked as `started`
+to link the new ticket to. You can also specify a string that if contained in
+an iteration's name, will trigger the integration to exclude consideration of
+that iteration. For example, if a team has multiple iterations `started` but
+one of them is a backlog iteration for given quarter.
+
+```yaml
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
+    project-name: Engineering
+    label-iteration-group-map: |
+      {
+        "Team Octocat": {
+          "groupId": "12345678-9012-3456-7890-123456789012",
+          "excludeName": "Backlog",
+        }
+      }
+```

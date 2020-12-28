@@ -43,6 +43,8 @@ inputs:
     description: Comma-separated list of GitHub users to ignore. Often used for bots.
   user-map:
     description: Map GitHub usernames to Clubhouse UUIDs
+  label-iteration-group-map:
+    description: Map GitHub labels to a Clubhouse Group to pull Iterations for linking from
 outputs:
   story-id:
     description: The ID of the associated story on Clubhouse

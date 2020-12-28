@@ -275,7 +275,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
+exports.getClubhouseIterationInfo = exports.getLatestMatchingClubhouseIteration = exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 const mustache_1 = __importDefault(__webpack_require__(272));
@@ -491,6 +491,8 @@ function createClubhouseStory(payload, http) {
             core.setFailed(`Could not find Clubhouse project: ${PROJECT_NAME}`);
             return null;
         }
+        const githubLabels = (payload.pull_request.labels || []).map((label) => label.name);
+        const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
         const body = {
             name: title,
             description,
@@ -504,6 +506,12 @@ function createClubhouseStory(payload, http) {
         };
         if (clubhouseUserId) {
             body.owner_ids = [clubhouseUserId];
+        }
+        if (clubhouseIterationInfo) {
+            const clubhouseIteration = yield getLatestMatchingClubhouseIteration(clubhouseIterationInfo, http);
+            if (clubhouseIteration) {
+                body.iteration_id = clubhouseIteration.id;
+            }
         }
         if (STATE_NAME) {
             const workflowState = yield getClubhouseWorkflowState(STATE_NAME, http, clubhouseProject);
@@ -611,6 +619,69 @@ function updateClubhouseStoryById(id, http, body) {
     });
 }
 exports.updateClubhouseStoryById = updateClubhouseStoryById;
+function getLatestMatchingClubhouseIteration(iterationInfo, http) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+            required: true,
+        });
+        try {
+            const iterationsResponse = yield http.getJson(`https://api.clubhouse.io/api/v3/iterations?token=${CLUBHOUSE_TOKEN}`);
+            const iterations = iterationsResponse.result;
+            if (!iterations) {
+                core.setFailed(`HTTP ${iterationsResponse.statusCode} https://api.clubhouse.io/api/v3/iterations`);
+                return;
+            }
+            const iterationsForGroup = iterations.filter((iteration) => {
+                if (iteration.status !== "started") {
+                    return false;
+                }
+                if (!iteration.group_ids.includes(iterationInfo.groupId)) {
+                    return false;
+                }
+                if (iterationInfo.excludeName &&
+                    iteration.name.includes(iterationInfo.excludeName)) {
+                    return false;
+                }
+                return true;
+            });
+            if (iterationsForGroup.length === 0) {
+                return;
+            }
+            // sort most-recently updated first
+            const sortedIterations = iterationsForGroup.sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+            return sortedIterations[0];
+        }
+        catch (err) {
+            core.setFailed(`HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/iterations\n${err.message}`);
+            return;
+        }
+    });
+}
+exports.getLatestMatchingClubhouseIteration = getLatestMatchingClubhouseIteration;
+function getClubhouseIterationInfo(githubLabels) {
+    const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
+    if (LABEL_MAP_STRING) {
+        try {
+            const LABEL_MAP = JSON.parse(LABEL_MAP_STRING);
+            for (const label in githubLabels) {
+                const info = LABEL_MAP[label];
+                if (info) {
+                    if (!info.groupId) {
+                        core.warning(`missing "groupId" key from "${label}" label in "label-iteration-group-map"; skipping`);
+                        continue;
+                    }
+                    return info;
+                }
+            }
+        }
+        catch (err) {
+            core.warning("`label-iteration-group-map` is not valid JSON");
+            return;
+        }
+    }
+    return;
+}
+exports.getClubhouseIterationInfo = getClubhouseIterationInfo;
 
 
 /***/ }),
