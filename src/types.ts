@@ -452,21 +452,4 @@ export interface ClubhouseIteration {
 }
 
 /** IterationSlim represents the same resource as an Iteration, but is more light-weight. */
-export interface ClubhouseIterationSlim {
-  entity_type: "iteration";
-  app_url: string;
-  created_at: string;
-  end_date: string;
-  follower_ids: string[];
-  group_ids: string[];
-  group_mention_ids: string[];
-  id: number;
-  labels: ClubhouseLabel[];
-  member_mention_ids: string[];
-  mention_ids: string[];
-  name: string;
-  start_date: string;
-  stats: ClubhouseProjectStats;
-  status: "unstarted" | "started" | "done";
-  updated_at: string;
-}
+export type ClubhouseIterationSlim = Omit<ClubhouseIteration, "description">;
