@@ -299,7 +299,9 @@ export async function createClubhouseStory(
   const githubLabels = (payload.pull_request.labels || []).map(
     (label) => label.name
   );
+  core.debug(`githubLabels: ${githubLabels}`);
   const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
+  core.debug(`clubhouseIterationInfo: ${clubhouseIterationInfo}`);
   const body: ClubhouseCreateStoryBody = {
     name: title,
     description,
@@ -319,6 +321,7 @@ export async function createClubhouseStory(
       clubhouseIterationInfo,
       http
     );
+    core.debug(`clubhouseIteration: ${clubhouseIteration}`);
     if (clubhouseIteration) {
       body.iteration_id = clubhouseIteration.id;
     }
