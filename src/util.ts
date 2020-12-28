@@ -379,7 +379,7 @@ export async function getClubhouseURLFromPullRequest(
   });
 
   // is there a clubhouse link in the description?
-  const results = payload.pull_request.body.match(CLUBHOUSE_STORY_URL_REGEXP);
+  const results = payload.pull_request.body?.match(CLUBHOUSE_STORY_URL_REGEXP);
   if (results) {
     return results[0];
   }
@@ -397,9 +397,7 @@ export async function getClubhouseURLFromPullRequest(
       (comment) => comment.body && CLUBHOUSE_STORY_URL_REGEXP.test(comment.body)
     );
     if (commentWithURL) {
-      const match =
-        commentWithURL.body &&
-        commentWithURL.body.match(CLUBHOUSE_STORY_URL_REGEXP);
+      const match = commentWithURL.body?.match(CLUBHOUSE_STORY_URL_REGEXP);
       if (match) {
         return match[0];
       }

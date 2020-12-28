@@ -544,12 +544,13 @@ function getClubhouseStoryIdFromBranchName(branchName) {
 }
 exports.getClubhouseStoryIdFromBranchName = getClubhouseStoryIdFromBranchName;
 function getClubhouseURLFromPullRequest(payload) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const GITHUB_TOKEN = core.getInput("github-token", {
             required: true,
         });
         // is there a clubhouse link in the description?
-        const results = payload.pull_request.body.match(exports.CLUBHOUSE_STORY_URL_REGEXP);
+        const results = (_a = payload.pull_request.body) === null || _a === void 0 ? void 0 : _a.match(exports.CLUBHOUSE_STORY_URL_REGEXP);
         if (results) {
             return results[0];
         }
@@ -564,8 +565,7 @@ function getClubhouseURLFromPullRequest(payload) {
         if (commentsResponse.status === 200) {
             const commentWithURL = commentsResponse.data.find((comment) => comment.body && exports.CLUBHOUSE_STORY_URL_REGEXP.test(comment.body));
             if (commentWithURL) {
-                const match = commentWithURL.body &&
-                    commentWithURL.body.match(exports.CLUBHOUSE_STORY_URL_REGEXP);
+                const match = (_b = commentWithURL.body) === null || _b === void 0 ? void 0 : _b.match(exports.CLUBHOUSE_STORY_URL_REGEXP);
                 if (match) {
                     return match[0];
                 }
