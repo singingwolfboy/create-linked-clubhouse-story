@@ -299,9 +299,10 @@ export async function createClubhouseStory(
   const githubLabels = (payload.pull_request.labels || []).map(
     (label) => label.name
   );
-  core.debug(`githubLabels: ${githubLabels}`);
+  core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
+  core.debug(`githubLabels: ${JSON.stringify(githubLabels)}`);
   const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
-  core.debug(`clubhouseIterationInfo: ${clubhouseIterationInfo}`);
+  core.debug(`clubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`);
   const body: ClubhouseCreateStoryBody = {
     name: title,
     description,
@@ -321,7 +322,7 @@ export async function createClubhouseStory(
       clubhouseIterationInfo,
       http
     );
-    core.debug(`clubhouseIteration: ${clubhouseIteration}`);
+    core.debug(`clubhouseIteration: ${JSON.stringify(clubhouseIteration)}`);
     if (clubhouseIteration) {
       body.iteration_id = clubhouseIteration.id;
     }
