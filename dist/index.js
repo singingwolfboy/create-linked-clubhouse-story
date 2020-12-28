@@ -492,6 +492,7 @@ function createClubhouseStory(payload, http) {
             return null;
         }
         const githubLabels = (payload.pull_request.labels || []).map((label) => label.name);
+        core.debug(`PR: ${JSON.stringify(payload.pull_request)}`);
         core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
         core.debug(`githubLabels: ${JSON.stringify(githubLabels)}`);
         const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
