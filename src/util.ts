@@ -374,11 +374,13 @@ export async function getClubhouseURLFromPullRequest(
   };
   const commentsResponse = await octokit.issues.listComments(params);
   if (commentsResponse.status === 200) {
-    const commentWithURL = commentsResponse.data.find((comment) =>
-      CLUBHOUSE_STORY_URL_REGEXP.test(comment.body)
+    const commentWithURL = commentsResponse.data.find(
+      (comment) => comment.body && CLUBHOUSE_STORY_URL_REGEXP.test(comment.body)
     );
     if (commentWithURL) {
-      const match = commentWithURL.body.match(CLUBHOUSE_STORY_URL_REGEXP);
+      const match =
+        commentWithURL.body &&
+        commentWithURL.body.match(CLUBHOUSE_STORY_URL_REGEXP);
       if (match) {
         return match[0];
       }
