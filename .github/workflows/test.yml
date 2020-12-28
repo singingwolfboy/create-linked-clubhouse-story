@@ -10,8 +10,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - run: npm ci
       - run: npm test
       - run: npm run lint
       - run: npm run format-check
+
+  verify-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci
+      - run: npm run build
+      - run: npm run pack
+      - run: git diff --exit-code
+        name: Verify that dist/index.js is up to date
