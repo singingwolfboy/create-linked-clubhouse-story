@@ -134,10 +134,8 @@ const util_1 = __webpack_require__(24);
 function labeled() {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = github_1.context.payload;
-        // TODO: grab labels. can we tell which label was added in the event?
         // Do this up front because we want to return fast if the new label was not
         // configured for Iteration support
-        core.debug(`payload: ${JSON.stringify(payload)}`);
         core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
         const newGithubLabel = payload.label ? payload.label.name : undefined;
         core.debug(`newGithubLabel: ${newGithubLabel}`);
@@ -154,8 +152,6 @@ function labeled() {
         if (storyId) {
             core.debug(`found story ID ${storyId} in branch ${branchName}`);
         }
-        // TODO: Does timing work out such that we can expect to have the CH
-        // story comment posted already when the label event fires?
         const clubhouseURL = yield util_1.getClubhouseURLFromPullRequest(payload);
         if (!clubhouseURL) {
             core.setFailed("Clubhouse URL not found!");
@@ -164,7 +160,6 @@ function labeled() {
         const match = clubhouseURL.match(util_1.CLUBHOUSE_STORY_URL_REGEXP);
         if (match) {
             storyId = match[1];
-            core.setOutput("story-id", storyId);
         }
         else {
             core.debug(`invalid Clubhouse URL: ${clubhouseURL}`);
@@ -182,9 +177,10 @@ function labeled() {
             yield util_1.updateClubhouseStoryById(storyId, http, {
                 iteration_id: clubhouseIteration.id,
             });
+            core.setOutput("iteration-url", clubhouseIteration.app_url);
+            core.setOutput("iteration-name", clubhouseIteration.name);
         }
         else {
-            // TODO: should this really be a failure?
             core.setFailed(`Could not find Clubhouse Iteration for story`);
         }
     });
