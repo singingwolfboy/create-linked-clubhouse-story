@@ -296,10 +296,6 @@ export async function createClubhouseStory(
     return null;
   }
 
-  const githubLabels = (payload.pull_request.labels || []).map(
-    (label) => label.name
-  );
-  const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
   const body: ClubhouseCreateStoryBody = {
     name: title,
     description,
@@ -313,15 +309,6 @@ export async function createClubhouseStory(
   };
   if (clubhouseUserId) {
     body.owner_ids = [clubhouseUserId];
-  }
-  if (clubhouseIterationInfo) {
-    const clubhouseIteration = await getLatestMatchingClubhouseIteration(
-      clubhouseIterationInfo,
-      http
-    );
-    if (clubhouseIteration) {
-      body.iteration_id = clubhouseIteration.id;
-    }
   }
   if (STATE_NAME) {
     const workflowState = await getClubhouseWorkflowState(
@@ -518,9 +505,12 @@ export async function getLatestMatchingClubhouseIteration(
 }
 
 export function getClubhouseIterationInfo(
-  githubLabels: string[]
+  githubLabel: string | undefined
 ): IterationInfo | undefined {
   const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
+  if (!githubLabel) {
+    return;
+  }
   if (LABEL_MAP_STRING) {
     try {
       const LABEL_MAP = JSON.parse(LABEL_MAP_STRING) as Record<
@@ -528,17 +518,15 @@ export function getClubhouseIterationInfo(
         IterationInfo
       >;
 
-      for (const label in githubLabels) {
-        const info = LABEL_MAP[label];
-        if (info) {
-          if (!info.groupId) {
-            core.warning(
-              `missing "groupId" key from "${label}" label in "label-iteration-group-map"; skipping`
-            );
-            continue;
-          }
-          return info;
+      const info = LABEL_MAP[githubLabel];
+      if (info) {
+        if (!info.groupId) {
+          core.warning(
+            `missing "groupId" key from "${githubLabel}" label in "label-iteration-group-map"; skipping`
+          );
+          return;
         }
+        return info;
       }
     } catch (err) {
       core.warning("`label-iteration-group-map` is not valid JSON");
@@ -546,4 +534,9 @@ export function getClubhouseIterationInfo(
     }
   }
   return;
+}
+
+/* Use with caution! Only to resolve potential races in event handling */
+export function delay(ms: number): Promise<typeof setTimeout> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
