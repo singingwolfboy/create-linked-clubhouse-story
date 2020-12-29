@@ -3,9 +3,7 @@ import { context } from "@actions/github";
 import { EventPayloads } from "@octokit/webhooks";
 import { HttpClient } from "@actions/http-client";
 import {
-  CLUBHOUSE_STORY_URL_REGEXP,
-  getClubhouseURLFromPullRequest,
-  getClubhouseStoryIdFromBranchName,
+  getClubhouseStoryIdFromPullRequest,
   getClubhouseStoryById,
   updateClubhouseStoryById,
   getClubhouseIterationInfo,
@@ -18,39 +16,26 @@ export default async function labeled(): Promise<void> {
 
   // Do this up front because we want to return fast if the new label was not
   // configured for Iteration support
-  core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
-  const newGithubLabel = payload.label ? payload.label.name : undefined;
-  core.debug(`newGithubLabel: ${newGithubLabel}`);
-  const clubhouseIterationInfo = getClubhouseIterationInfo(newGithubLabel);
-  core.debug(
-    `ClubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`
-  );
+  const newLabel = payload.label?.name;
+  if (!newLabel) {
+    core.debug("missing label information from payload");
+    return;
+  }
+  core.debug(`new label on GitHub: "${newLabel}"`);
+  const clubhouseIterationInfo = getClubhouseIterationInfo(newLabel);
   if (!clubhouseIterationInfo) {
-    core.debug(`No new label configured for iteration matching. Done!`);
+    core.debug(`label "${newLabel}" is not configured for iteration matching`);
     return;
   }
 
-  core.debug(`Waiting 10s to ensure CH ticket has been created`);
+  core.debug(`Waiting 10s to ensure Clubhouse ticket has been created`);
   await delay(10000);
-  const branchName = payload.pull_request.head.ref;
-  let storyId = getClubhouseStoryIdFromBranchName(branchName);
-  if (storyId) {
-    core.debug(`found story ID ${storyId} in branch ${branchName}`);
-  }
-
-  const clubhouseURL = await getClubhouseURLFromPullRequest(payload);
-  if (!clubhouseURL) {
-    core.setFailed("Clubhouse URL not found!");
+  const storyId = await getClubhouseStoryIdFromPullRequest(payload);
+  if (!storyId) {
+    core.setFailed("Could not find Clubhouse story ID");
     return;
   }
-
-  const match = clubhouseURL.match(CLUBHOUSE_STORY_URL_REGEXP);
-  if (match) {
-    storyId = match[1];
-  } else {
-    core.debug(`invalid Clubhouse URL: ${clubhouseURL}`);
-    return;
-  }
+  core.debug(`Clubhouse story ID: ${storyId}`);
 
   const http = new HttpClient();
   const story = await getClubhouseStoryById(storyId, http);
@@ -63,14 +48,16 @@ export default async function labeled(): Promise<void> {
     clubhouseIterationInfo,
     http
   );
-  core.debug(`clubhouseIteration: ${JSON.stringify(clubhouseIteration)}`);
-  if (clubhouseIteration) {
-    await updateClubhouseStoryById(storyId, http, {
-      iteration_id: clubhouseIteration.id,
-    });
-    core.setOutput("iteration-url", clubhouseIteration.app_url);
-    core.setOutput("iteration-name", clubhouseIteration.name);
-  } else {
-    core.setFailed(`Could not find Clubhouse Iteration for story`);
+  if (!clubhouseIteration) {
+    core.setFailed(`Could not find Clubhouse iteration for story ${storyId}`);
+    return;
   }
+  core.debug(
+    `assigning Clubhouse iteration: "${clubhouseIteration.name}", ID ${clubhouseIteration.id}`
+  );
+  await updateClubhouseStoryById(storyId, http, {
+    iteration_id: clubhouseIteration.id,
+  });
+  core.setOutput("iteration-url", clubhouseIteration.app_url);
+  core.setOutput("iteration-name", clubhouseIteration.name);
 }

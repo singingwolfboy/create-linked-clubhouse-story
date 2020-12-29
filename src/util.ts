@@ -400,6 +400,27 @@ export async function getClubhouseURLFromPullRequest(
   return null;
 }
 
+export async function getClubhouseStoryIdFromPullRequest(
+  payload: EventPayloads.WebhookPayloadPullRequest
+): Promise<string | null> {
+  const branchName = payload.pull_request.head.ref;
+  const storyId = getClubhouseStoryIdFromBranchName(branchName);
+  if (storyId) {
+    return storyId;
+  }
+
+  const clubhouseURL = await getClubhouseURLFromPullRequest(payload);
+  if (!clubhouseURL) {
+    return null;
+  }
+
+  const match = clubhouseURL.match(CLUBHOUSE_STORY_URL_REGEXP);
+  if (match) {
+    return match[1];
+  }
+  return null;
+}
+
 export async function addCommentToPullRequest(
   payload: EventPayloads.WebhookPayloadPullRequest,
   comment: string
@@ -505,35 +526,33 @@ export async function getLatestMatchingClubhouseIteration(
 }
 
 export function getClubhouseIterationInfo(
-  githubLabel: string | undefined
+  githubLabel: string
 ): IterationInfo | undefined {
   const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
-  if (!githubLabel) {
+  if (!LABEL_MAP_STRING) {
+    core.warning("`label-iteration-group-map` is empty or unset");
     return;
   }
-  if (LABEL_MAP_STRING) {
-    try {
-      const LABEL_MAP = JSON.parse(LABEL_MAP_STRING) as Record<
-        string,
-        IterationInfo
-      >;
+  try {
+    const LABEL_MAP = JSON.parse(LABEL_MAP_STRING) as Record<
+      string,
+      IterationInfo
+    >;
 
-      const info = LABEL_MAP[githubLabel];
-      if (info) {
-        if (!info.groupId) {
-          core.warning(
-            `missing "groupId" key from "${githubLabel}" label in "label-iteration-group-map"; skipping`
-          );
-          return;
-        }
-        return info;
+    const info = LABEL_MAP[githubLabel];
+    if (info) {
+      if (!info.groupId) {
+        core.warning(
+          `missing "groupId" key from "${githubLabel}" label in "label-iteration-group-map"; skipping`
+        );
+        return;
       }
-    } catch (err) {
-      core.warning("`label-iteration-group-map` is not valid JSON");
-      return;
+      return info;
     }
+  } catch (err) {
+    core.warning("`label-iteration-group-map` is not valid JSON");
+    return;
   }
-  return;
 }
 
 /* Use with caution! Only to resolve potential races in event handling */

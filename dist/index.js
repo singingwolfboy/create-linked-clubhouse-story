@@ -132,39 +132,30 @@ const github_1 = __webpack_require__(438);
 const http_client_1 = __webpack_require__(925);
 const util_1 = __webpack_require__(24);
 function labeled() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const payload = github_1.context.payload;
         // Do this up front because we want to return fast if the new label was not
         // configured for Iteration support
-        core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
-        const newGithubLabel = payload.label ? payload.label.name : undefined;
-        core.debug(`newGithubLabel: ${newGithubLabel}`);
-        const clubhouseIterationInfo = util_1.getClubhouseIterationInfo(newGithubLabel);
-        core.debug(`ClubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`);
+        const newLabel = (_a = payload.label) === null || _a === void 0 ? void 0 : _a.name;
+        if (!newLabel) {
+            core.debug("missing label information from payload");
+            return;
+        }
+        core.debug(`new label on GitHub: "${newLabel}"`);
+        const clubhouseIterationInfo = util_1.getClubhouseIterationInfo(newLabel);
         if (!clubhouseIterationInfo) {
-            core.debug(`No new label configured for iteration matching. Done!`);
+            core.debug(`label "${newLabel}" is not configured for iteration matching`);
             return;
         }
-        core.debug(`Waiting 10s to ensure CH ticket has been created`);
+        core.debug(`Waiting 10s to ensure Clubhouse ticket has been created`);
         yield util_1.delay(10000);
-        const branchName = payload.pull_request.head.ref;
-        let storyId = util_1.getClubhouseStoryIdFromBranchName(branchName);
-        if (storyId) {
-            core.debug(`found story ID ${storyId} in branch ${branchName}`);
-        }
-        const clubhouseURL = yield util_1.getClubhouseURLFromPullRequest(payload);
-        if (!clubhouseURL) {
-            core.setFailed("Clubhouse URL not found!");
+        const storyId = yield util_1.getClubhouseStoryIdFromPullRequest(payload);
+        if (!storyId) {
+            core.setFailed("Could not find Clubhouse story ID");
             return;
         }
-        const match = clubhouseURL.match(util_1.CLUBHOUSE_STORY_URL_REGEXP);
-        if (match) {
-            storyId = match[1];
-        }
-        else {
-            core.debug(`invalid Clubhouse URL: ${clubhouseURL}`);
-            return;
-        }
+        core.debug(`Clubhouse story ID: ${storyId}`);
         const http = new http_client_1.HttpClient();
         const story = yield util_1.getClubhouseStoryById(storyId, http);
         if (!story) {
@@ -172,17 +163,16 @@ function labeled() {
             return;
         }
         const clubhouseIteration = yield util_1.getLatestMatchingClubhouseIteration(clubhouseIterationInfo, http);
-        core.debug(`clubhouseIteration: ${JSON.stringify(clubhouseIteration)}`);
-        if (clubhouseIteration) {
-            yield util_1.updateClubhouseStoryById(storyId, http, {
-                iteration_id: clubhouseIteration.id,
-            });
-            core.setOutput("iteration-url", clubhouseIteration.app_url);
-            core.setOutput("iteration-name", clubhouseIteration.name);
+        if (!clubhouseIteration) {
+            core.setFailed(`Could not find Clubhouse iteration for story ${storyId}`);
+            return;
         }
-        else {
-            core.setFailed(`Could not find Clubhouse Iteration for story`);
-        }
+        core.debug(`assigning Clubhouse iteration: "${clubhouseIteration.name}", ID ${clubhouseIteration.id}`);
+        yield util_1.updateClubhouseStoryById(storyId, http, {
+            iteration_id: clubhouseIteration.id,
+        });
+        core.setOutput("iteration-url", clubhouseIteration.app_url);
+        core.setOutput("iteration-name", clubhouseIteration.name);
     });
 }
 exports.default = labeled;
@@ -375,7 +365,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.delay = exports.getClubhouseIterationInfo = exports.getLatestMatchingClubhouseIteration = exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
+exports.delay = exports.getClubhouseIterationInfo = exports.getLatestMatchingClubhouseIteration = exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseStoryIdFromPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 const mustache_1 = __importDefault(__webpack_require__(272));
@@ -670,6 +660,25 @@ function getClubhouseURLFromPullRequest(payload) {
     });
 }
 exports.getClubhouseURLFromPullRequest = getClubhouseURLFromPullRequest;
+function getClubhouseStoryIdFromPullRequest(payload) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const branchName = payload.pull_request.head.ref;
+        const storyId = getClubhouseStoryIdFromBranchName(branchName);
+        if (storyId) {
+            return storyId;
+        }
+        const clubhouseURL = yield getClubhouseURLFromPullRequest(payload);
+        if (!clubhouseURL) {
+            return null;
+        }
+        const match = clubhouseURL.match(exports.CLUBHOUSE_STORY_URL_REGEXP);
+        if (match) {
+            return match[1];
+        }
+        return null;
+    });
+}
+exports.getClubhouseStoryIdFromPullRequest = getClubhouseStoryIdFromPullRequest;
 function addCommentToPullRequest(payload, comment) {
     return __awaiter(this, void 0, void 0, function* () {
         const GITHUB_TOKEN = core.getInput("github-token", {
@@ -752,27 +761,25 @@ function getLatestMatchingClubhouseIteration(iterationInfo, http) {
 exports.getLatestMatchingClubhouseIteration = getLatestMatchingClubhouseIteration;
 function getClubhouseIterationInfo(githubLabel) {
     const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
-    if (!githubLabel) {
+    if (!LABEL_MAP_STRING) {
+        core.warning("`label-iteration-group-map` is empty or unset");
         return;
     }
-    if (LABEL_MAP_STRING) {
-        try {
-            const LABEL_MAP = JSON.parse(LABEL_MAP_STRING);
-            const info = LABEL_MAP[githubLabel];
-            if (info) {
-                if (!info.groupId) {
-                    core.warning(`missing "groupId" key from "${githubLabel}" label in "label-iteration-group-map"; skipping`);
-                    return;
-                }
-                return info;
+    try {
+        const LABEL_MAP = JSON.parse(LABEL_MAP_STRING);
+        const info = LABEL_MAP[githubLabel];
+        if (info) {
+            if (!info.groupId) {
+                core.warning(`missing "groupId" key from "${githubLabel}" label in "label-iteration-group-map"; skipping`);
+                return;
             }
-        }
-        catch (err) {
-            core.warning("`label-iteration-group-map` is not valid JSON");
-            return;
+            return info;
         }
     }
-    return;
+    catch (err) {
+        core.warning("`label-iteration-group-map` is not valid JSON");
+        return;
+    }
 }
 exports.getClubhouseIterationInfo = getClubhouseIterationInfo;
 /* Use with caution! Only to resolve potential races in event handling */
