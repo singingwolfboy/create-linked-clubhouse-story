@@ -508,7 +508,6 @@ export function getClubhouseIterationInfo(
   githubLabel: string | undefined,
 ): IterationInfo | undefined {
   const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
-  core.debug(`LABEL_MAP_STRING: ${LABEL_MAP_STRING}`);
   if (!githubLabel) {
     return;
   }
@@ -535,4 +534,11 @@ export function getClubhouseIterationInfo(
     }
   }
   return;
+}
+
+/* Use with caution! Only to resolve potential races in event handling */
+export function delay(
+  ms: number,
+): Promise<typeof setTimeout> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

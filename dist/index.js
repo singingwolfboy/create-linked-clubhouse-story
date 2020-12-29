@@ -142,11 +142,13 @@ function labeled() {
         const newGithubLabel = payload.label ? payload.label.name : undefined;
         core.debug(`newGithubLabel: ${newGithubLabel}`);
         const clubhouseIterationInfo = util_1.getClubhouseIterationInfo(newGithubLabel);
-        core.debug(`ClubhouseIterationInfo: ${clubhouseIterationInfo}`);
+        core.debug(`ClubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`);
         if (!clubhouseIterationInfo) {
             core.debug(`No new label configured for iteration matching. Done!`);
             return;
         }
+        core.debug(`Waiting 10s to ensure CH ticket has been created`);
+        yield util_1.delay(10000);
         const branchName = payload.pull_request.head.ref;
         let storyId = util_1.getClubhouseStoryIdFromBranchName(branchName);
         if (storyId) {
@@ -377,7 +379,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getClubhouseIterationInfo = exports.getLatestMatchingClubhouseIteration = exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
+exports.delay = exports.getClubhouseIterationInfo = exports.getLatestMatchingClubhouseIteration = exports.updateClubhouseStoryById = exports.addCommentToPullRequest = exports.getClubhouseURLFromPullRequest = exports.getClubhouseStoryIdFromBranchName = exports.createClubhouseStory = exports.getClubhouseWorkflowState = exports.getClubhouseProjectByName = exports.getClubhouseProject = exports.getClubhouseStoryById = exports.getClubhouseUserId = exports.getUserListAsSet = exports.shouldProcessPullRequestForUser = exports.CLUBHOUSE_BRANCH_NAME_REGEXP = exports.CLUBHOUSE_STORY_URL_REGEXP = void 0;
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
 const mustache_1 = __importDefault(__webpack_require__(272));
@@ -754,7 +756,6 @@ function getLatestMatchingClubhouseIteration(iterationInfo, http) {
 exports.getLatestMatchingClubhouseIteration = getLatestMatchingClubhouseIteration;
 function getClubhouseIterationInfo(githubLabel) {
     const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
-    core.debug(`LABEL_MAP_STRING: ${LABEL_MAP_STRING}`);
     if (!githubLabel) {
         return;
     }
@@ -778,6 +779,11 @@ function getClubhouseIterationInfo(githubLabel) {
     return;
 }
 exports.getClubhouseIterationInfo = getClubhouseIterationInfo;
+/* Use with caution! Only to resolve potential races in event handling */
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+exports.delay = delay;
 
 
 /***/ }),

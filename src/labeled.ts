@@ -10,6 +10,7 @@ import {
   updateClubhouseStoryById,
   getClubhouseIterationInfo,
   getLatestMatchingClubhouseIteration,
+  delay,
 } from "./util";
 
 export default async function labeled(): Promise<void> {
@@ -23,12 +24,14 @@ export default async function labeled(): Promise<void> {
   const newGithubLabel = payload.label ? payload.label.name : undefined;
   core.debug(`newGithubLabel: ${newGithubLabel}`);
   const clubhouseIterationInfo = getClubhouseIterationInfo(newGithubLabel);
-  core.debug(`ClubhouseIterationInfo: ${clubhouseIterationInfo}`);
+  core.debug(`ClubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`);
   if (!clubhouseIterationInfo) {
     core.debug(`No new label configured for iteration matching. Done!`);
     return;
   }
 
+  core.debug(`Waiting 10s to ensure CH ticket has been created`);
+  await delay(10000);
   const branchName = payload.pull_request.head.ref;
   let storyId = getClubhouseStoryIdFromBranchName(branchName);
   if (storyId) {
