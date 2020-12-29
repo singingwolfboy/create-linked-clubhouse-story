@@ -766,10 +766,13 @@ function getLatestMatchingClubhouseIteration(iterationInfo, http) {
 exports.getLatestMatchingClubhouseIteration = getLatestMatchingClubhouseIteration;
 function getClubhouseIterationInfo(githubLabels) {
     const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
+    core.debug(`LABEL_MAP_STRING: ${LABEL_MAP_STRING}`);
     if (LABEL_MAP_STRING) {
         try {
             const LABEL_MAP = JSON.parse(LABEL_MAP_STRING);
+            core.debug(`LABEL_MAP (parsed): ${LABEL_MAP}`);
             for (const label in githubLabels) {
+                core.debug(`Looking for map entry matching label '${label}'`);
                 const info = LABEL_MAP[label];
                 if (info) {
                     if (!info.groupId) {
