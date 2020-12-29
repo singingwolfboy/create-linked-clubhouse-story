@@ -93,6 +93,104 @@ exports.default = closed;
 
 /***/ }),
 
+/***/ 788:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__webpack_require__(186));
+const github_1 = __webpack_require__(438);
+const http_client_1 = __webpack_require__(925);
+const util_1 = __webpack_require__(24);
+function labeled() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const payload = github_1.context.payload;
+        // TODO: grab labels. can we tell which label was added in the event?
+        // Do this up front because we want to return fast if a PR has no labels
+        // configured for Iteration support
+        core.debug(`payload: ${JSON.stringify(payload)}`);
+        core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
+        const githubLabels = (payload.pull_request.labels || []).map((label) => label.name);
+        core.debug(`githubLabels: ${JSON.stringify(githubLabels)}`);
+        const clubhouseIterationInfo = util_1.getClubhouseIterationInfo(githubLabels);
+        if (!clubhouseIterationInfo) {
+            core.debug(`No new label configured for iteration matching. Done!`);
+            return;
+        }
+        const branchName = payload.pull_request.head.ref;
+        let storyId = util_1.getClubhouseStoryIdFromBranchName(branchName);
+        if (storyId) {
+            core.debug(`found story ID ${storyId} in branch ${branchName}`);
+        }
+        // TODO: Does timing work out such that we can expect to have the CH
+        // story comment posted already when the label event fires?
+        const clubhouseURL = yield util_1.getClubhouseURLFromPullRequest(payload);
+        if (!clubhouseURL) {
+            core.setFailed("Clubhouse URL not found!");
+            return;
+        }
+        const match = clubhouseURL.match(util_1.CLUBHOUSE_STORY_URL_REGEXP);
+        if (match) {
+            storyId = match[1];
+            core.setOutput("story-id", storyId);
+        }
+        else {
+            core.debug(`invalid Clubhouse URL: ${clubhouseURL}`);
+            return;
+        }
+        const http = new http_client_1.HttpClient();
+        const story = yield util_1.getClubhouseStoryById(storyId, http);
+        if (!story) {
+            core.setFailed(`Could not get Clubhouse story ${storyId}`);
+            return;
+        }
+        const clubhouseIteration = yield util_1.getLatestMatchingClubhouseIteration(clubhouseIterationInfo, http);
+        core.debug(`clubhouseIteration: ${JSON.stringify(clubhouseIteration)}`);
+        if (clubhouseIteration) {
+            yield util_1.updateClubhouseStoryById(storyId, http, {
+                iteration_id: clubhouseIteration.id,
+            });
+        }
+        else {
+            // TODO: should this really be a failure?
+            core.setFailed(`Could not find Clubhouse Iteration for story`);
+        }
+    });
+}
+exports.default = labeled;
+
+
+/***/ }),
+
 /***/ 109:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -134,6 +232,7 @@ const core = __importStar(__webpack_require__(186));
 const github_1 = __webpack_require__(438);
 const opened_1 = __importDefault(__webpack_require__(711));
 const closed_1 = __importDefault(__webpack_require__(252));
+const labeled_1 = __importDefault(__webpack_require__(788));
 const util_1 = __webpack_require__(24);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -150,8 +249,10 @@ function run() {
                 return opened_1.default();
             case "closed":
                 return closed_1.default();
+            case "labeled":
+                return labeled_1.default();
             default:
-                core.setFailed("This action only works with the `opened` and `closed` actions for `pull_request` events");
+                core.setFailed("This action only works with the `opened`, `closed` and `labeled` actions for `pull_request` events");
                 return;
         }
     });
