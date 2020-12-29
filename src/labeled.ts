@@ -16,15 +16,14 @@ export default async function labeled(): Promise<void> {
   const payload = context.payload as EventPayloads.WebhookPayloadPullRequest;
 
   // TODO: grab labels. can we tell which label was added in the event?
-  // Do this up front because we want to return fast if a PR has no labels
+  // Do this up front because we want to return fast if the new label was not
   // configured for Iteration support
   core.debug(`payload: ${JSON.stringify(payload)}`);
   core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
-  const githubLabels = (payload.pull_request.labels || []).map(
-    (label) => label.name
-  );
-  core.debug(`githubLabels: ${JSON.stringify(githubLabels)}`);
-  const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
+  const newGithubLabel = payload.label ? payload.label.name : undefined;
+  core.debug(`newGithubLabel: ${newGithubLabel}`);
+  const clubhouseIterationInfo = getClubhouseIterationInfo(newGithubLabel);
+  core.debug(`ClubhouseIterationInfo: ${clubhouseIterationInfo}`);
   if (!clubhouseIterationInfo) {
     core.debug(`No new label configured for iteration matching. Done!`);
     return;

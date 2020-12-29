@@ -296,14 +296,6 @@ export async function createClubhouseStory(
     return null;
   }
 
-  const githubLabels = (payload.pull_request.labels || []).map(
-    (label) => label.name
-  );
-  core.debug(`payload: ${JSON.stringify(payload)}`);
-  core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
-  core.debug(`githubLabels: ${JSON.stringify(githubLabels)}`);
-  const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
-  core.debug(`clubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`);
   const body: ClubhouseCreateStoryBody = {
     name: title,
     description,
@@ -317,16 +309,6 @@ export async function createClubhouseStory(
   };
   if (clubhouseUserId) {
     body.owner_ids = [clubhouseUserId];
-  }
-  if (clubhouseIterationInfo) {
-    const clubhouseIteration = await getLatestMatchingClubhouseIteration(
-      clubhouseIterationInfo,
-      http
-    );
-    core.debug(`clubhouseIteration: ${JSON.stringify(clubhouseIteration)}`);
-    if (clubhouseIteration) {
-      body.iteration_id = clubhouseIteration.id;
-    }
   }
   if (STATE_NAME) {
     const workflowState = await getClubhouseWorkflowState(
@@ -523,30 +505,29 @@ export async function getLatestMatchingClubhouseIteration(
 }
 
 export function getClubhouseIterationInfo(
-  githubLabels: string[]
+  githubLabel: string | undefined,
 ): IterationInfo | undefined {
   const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
   core.debug(`LABEL_MAP_STRING: ${LABEL_MAP_STRING}`);
+  if (!githubLabel) {
+    return;
+  }
   if (LABEL_MAP_STRING) {
     try {
       const LABEL_MAP = JSON.parse(LABEL_MAP_STRING) as Record<
         string,
         IterationInfo
       >;
-      core.debug(`LABEL_MAP (parsed): ${LABEL_MAP}`);
 
-      for (const label in githubLabels) {
-        core.debug(`Looking for map entry matching label '${label}'`);
-        const info = LABEL_MAP[label];
-        if (info) {
-          if (!info.groupId) {
-            core.warning(
-              `missing "groupId" key from "${label}" label in "label-iteration-group-map"; skipping`
-            );
-            continue;
-          }
-          return info;
+      const info = LABEL_MAP[githubLabel];
+      if (info) {
+        if (!info.groupId) {
+          core.warning(
+            `missing "groupId" key from "${githubLabel}" label in "label-iteration-group-map"; skipping`
+          );
+          return;
         }
+        return info;
       }
     } catch (err) {
       core.warning("`label-iteration-group-map` is not valid JSON");

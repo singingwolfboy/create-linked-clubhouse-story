@@ -135,13 +135,14 @@ function labeled() {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = github_1.context.payload;
         // TODO: grab labels. can we tell which label was added in the event?
-        // Do this up front because we want to return fast if a PR has no labels
+        // Do this up front because we want to return fast if the new label was not
         // configured for Iteration support
         core.debug(`payload: ${JSON.stringify(payload)}`);
         core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
-        const githubLabels = (payload.pull_request.labels || []).map((label) => label.name);
-        core.debug(`githubLabels: ${JSON.stringify(githubLabels)}`);
-        const clubhouseIterationInfo = util_1.getClubhouseIterationInfo(githubLabels);
+        const newGithubLabel = payload.label ? payload.label.name : undefined;
+        core.debug(`newGithubLabel: ${newGithubLabel}`);
+        const clubhouseIterationInfo = util_1.getClubhouseIterationInfo(newGithubLabel);
+        core.debug(`ClubhouseIterationInfo: ${clubhouseIterationInfo}`);
         if (!clubhouseIterationInfo) {
             core.debug(`No new label configured for iteration matching. Done!`);
             return;
@@ -592,12 +593,6 @@ function createClubhouseStory(payload, http) {
             core.setFailed(`Could not find Clubhouse project: ${PROJECT_NAME}`);
             return null;
         }
-        const githubLabels = (payload.pull_request.labels || []).map((label) => label.name);
-        core.debug(`payload: ${JSON.stringify(payload)}`);
-        core.debug(`PR labels: ${JSON.stringify(payload.pull_request.labels)}`);
-        core.debug(`githubLabels: ${JSON.stringify(githubLabels)}`);
-        const clubhouseIterationInfo = getClubhouseIterationInfo(githubLabels);
-        core.debug(`clubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`);
         const body = {
             name: title,
             description,
@@ -611,13 +606,6 @@ function createClubhouseStory(payload, http) {
         };
         if (clubhouseUserId) {
             body.owner_ids = [clubhouseUserId];
-        }
-        if (clubhouseIterationInfo) {
-            const clubhouseIteration = yield getLatestMatchingClubhouseIteration(clubhouseIterationInfo, http);
-            core.debug(`clubhouseIteration: ${JSON.stringify(clubhouseIteration)}`);
-            if (clubhouseIteration) {
-                body.iteration_id = clubhouseIteration.id;
-            }
         }
         if (STATE_NAME) {
             const workflowState = yield getClubhouseWorkflowState(STATE_NAME, http, clubhouseProject);
@@ -764,23 +752,22 @@ function getLatestMatchingClubhouseIteration(iterationInfo, http) {
     });
 }
 exports.getLatestMatchingClubhouseIteration = getLatestMatchingClubhouseIteration;
-function getClubhouseIterationInfo(githubLabels) {
+function getClubhouseIterationInfo(githubLabel) {
     const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
     core.debug(`LABEL_MAP_STRING: ${LABEL_MAP_STRING}`);
+    if (!githubLabel) {
+        return;
+    }
     if (LABEL_MAP_STRING) {
         try {
             const LABEL_MAP = JSON.parse(LABEL_MAP_STRING);
-            core.debug(`LABEL_MAP (parsed): ${LABEL_MAP}`);
-            for (const label in githubLabels) {
-                core.debug(`Looking for map entry matching label '${label}'`);
-                const info = LABEL_MAP[label];
-                if (info) {
-                    if (!info.groupId) {
-                        core.warning(`missing "groupId" key from "${label}" label in "label-iteration-group-map"; skipping`);
-                        continue;
-                    }
-                    return info;
+            const info = LABEL_MAP[githubLabel];
+            if (info) {
+                if (!info.groupId) {
+                    core.warning(`missing "groupId" key from "${githubLabel}" label in "label-iteration-group-map"; skipping`);
+                    return;
                 }
+                return info;
             }
         }
         catch (err) {
