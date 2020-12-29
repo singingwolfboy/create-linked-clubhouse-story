@@ -22,7 +22,9 @@ export default async function labeled(): Promise<void> {
   const newGithubLabel = payload.label ? payload.label.name : undefined;
   core.debug(`newGithubLabel: ${newGithubLabel}`);
   const clubhouseIterationInfo = getClubhouseIterationInfo(newGithubLabel);
-  core.debug(`ClubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`);
+  core.debug(
+    `ClubhouseIterationInfo: ${JSON.stringify(clubhouseIterationInfo)}`
+  );
   if (!clubhouseIterationInfo) {
     core.debug(`No new label configured for iteration matching. Done!`);
     return;
@@ -64,7 +66,7 @@ export default async function labeled(): Promise<void> {
   core.debug(`clubhouseIteration: ${JSON.stringify(clubhouseIteration)}`);
   if (clubhouseIteration) {
     await updateClubhouseStoryById(storyId, http, {
-      iteration_id:  clubhouseIteration.id,
+      iteration_id: clubhouseIteration.id,
     });
     core.setOutput("iteration-url", clubhouseIteration.app_url);
     core.setOutput("iteration-name", clubhouseIteration.name);

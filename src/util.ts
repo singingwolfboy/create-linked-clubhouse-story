@@ -505,7 +505,7 @@ export async function getLatestMatchingClubhouseIteration(
 }
 
 export function getClubhouseIterationInfo(
-  githubLabel: string | undefined,
+  githubLabel: string | undefined
 ): IterationInfo | undefined {
   const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
   if (!githubLabel) {
@@ -537,8 +537,6 @@ export function getClubhouseIterationInfo(
 }
 
 /* Use with caution! Only to resolve potential races in event handling */
-export function delay(
-  ms: number,
-): Promise<typeof setTimeout> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export function delay(ms: number): Promise<typeof setTimeout> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
