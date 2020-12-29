@@ -23,7 +23,7 @@ jobs:
   clubhouse:
     runs-on: ubuntu-latest
     steps:
-      - uses: singingwolfboy/create-linked-clubhouse-story@v1.6
+      - uses: singingwolfboy/create-linked-clubhouse-story@v1.7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -59,7 +59,7 @@ You can customize the comment posted on pull requests using the `comment-templat
 variable, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -89,7 +89,7 @@ You can customize the Clubhouse **title** and **description** when creating stor
 variables, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -127,7 +127,7 @@ map GitHub users to Clubhouse users. The user map should be passed in the
 formatted string. Here's an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -155,7 +155,7 @@ You can also add a list of GitHub users to ignore for this integration by using 
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -169,7 +169,7 @@ You can also add a list of GitHub `only-users` for this integration. This works 
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -179,17 +179,46 @@ Multiple users should be separated by commas.
 
 ## Iteration Support
 
-You can also automatically add newly created tickets to a Clubhouse Iteration.
-Since iterations are generally team-dependent and only relevant for a period of
-time, this is configured through a map that identifies the groupId of which the
-integration will pick the most recently updated Iteration marked as `started`
-to link the new ticket to. You can also specify a string that if contained in
-an iteration's name, will trigger the integration to exclude consideration of
-that iteration. For example, if a team has multiple iterations `started` but
-one of them is a backlog iteration for given quarter.
+Clubhouse supports the concept of [iterations](https://help.clubhouse.io/hc/en-us/articles/360028953452-Iterations-Overview)
+ -- time-boxed periods of development for stories. You can configure this Action
+to automatically assign the Clubhouse stories it creates to Clubhouse iterations,
+using GitHub labels and Clubhouse groups to identify the correct iteration to use.
+
+In order to use this feature, this Action makes a few assumptions about
+the way you use Clubhouse and GitHub:
+
+- We assume that each team has an associated [Clubhouse group](https://help.clubhouse.io/hc/en-us/articles/360039328751-Groups-Group-Management),
+  and that Clubhouse iterations are associated with this group.
+- We assume that the correct iteration to use is the *most recent*
+  in-progress iteration for the group, as determined by the "last updated" time.
+  (However, you may exclude specific iterations by name.)
+- We assume that each team has an associated [GitHub label](https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/managing-labels),
+  and that this label is applied to pull requests consistently.
+  (You may do this manually, or use an automated system like the
+  [Labeler Action](https://github.com/actions/labeler).)
+
+If you want to use this feature, and you have a different workflow that
+does *not* match these assumptions, open a GitHub Issue on this repo
+and let's talk about it! Maybe we can find a way to make this Action
+support other workflows, as well.
+
+If your workflow is compatible with these assumptions, and you want to use this feature,
+first you must modify the [`on` section](https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#on)
+of your config file to include the
+[`labeled` activity type for the `pull_request` event](https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows#pull_request).
+For example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.6
+on:
+  pull_request:
+    types: [opened, closed, labeled]
+```
+
+Next, provide a JSON-formatted string to the `label-iteration-group-map` input.
+This is used to map GitHub labels to Clubhouse groups. Here is an example:
+
+```yaml
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -198,7 +227,15 @@ one of them is a backlog iteration for given quarter.
       {
         "Team Octocat": {
           "groupId": "12345678-9012-3456-7890-123456789012",
-          "excludeName": "Backlog",
+          "excludeName": "Backlog"
+        },
+        "Unicorns": {
+          "groupId": "34567890-1234-5678-9012-345678901234"
         }
       }
 ```
+
+In this example, "Team Octocat" and "Unicorns" are labels on GitHub.
+The "groupId" refers to the ID of the Clubhouse group that are associated
+with these respective teams. The "excludeName" key is optional;
+if provided, it is used to exclude specific iterations from consideration.
