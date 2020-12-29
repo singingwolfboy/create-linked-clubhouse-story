@@ -777,7 +777,7 @@ function getClubhouseIterationInfo(githubLabel) {
 exports.getClubhouseIterationInfo = getClubhouseIterationInfo;
 /* Use with caution! Only to resolve potential races in event handling */
 function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 exports.delay = delay;
 
