@@ -263,6 +263,24 @@ test("getClubhouseURLFromPullRequest desc", async () => {
   expect(url).toEqual("https://app.clubhouse.io/org/story/12345");
 });
 
+test("getClubhouseURLFromPullRequest desc hyphens", async () => {
+  const payload = {
+    pull_request: {
+      body: "Clubhouse story: https://app.clubhouse.io/org-org/story/12345",
+      number: 123,
+    },
+    repository: {
+      owner: {
+        login: "octocat",
+      },
+      name: "example",
+    },
+  };
+
+  const url = await util.getClubhouseURLFromPullRequest(payload as any);
+  expect(url).toEqual("https://app.clubhouse.io/org-org/story/12345");
+});
+
 test("getClubhouseURLFromPullRequest comment", async () => {
   const payload = {
     pull_request: {
