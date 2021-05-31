@@ -23,7 +23,7 @@ jobs:
   clubhouse:
     runs-on: ubuntu-latest
     steps:
-      - uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+      - uses: singingwolfboy/create-linked-clubhouse-story@v1.8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -59,7 +59,7 @@ You can customize the comment posted on pull requests using the `comment-templat
 variable, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.8
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -89,7 +89,7 @@ You can customize the Clubhouse **title** and **description** when creating stor
 variables, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.8
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -127,7 +127,7 @@ map GitHub users to Clubhouse users. The user map should be passed in the
 formatted string. Here's an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.8
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -155,7 +155,7 @@ You can also add a list of GitHub users to ignore for this integration by using 
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.8
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -169,7 +169,7 @@ You can also add a list of GitHub `only-users` for this integration. This works 
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.8
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
@@ -218,7 +218,7 @@ Next, provide a JSON-formatted string to the `label-iteration-group-map` input.
 This is used to map GitHub labels to Clubhouse groups. Here is an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-clubhouse-story@v1.7
+- uses: singingwolfboy/create-linked-clubhouse-story@v1.8
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
