@@ -585,12 +585,7 @@ function createClubhouseStory(payload, http) {
             name: title,
             description,
             project_id: clubhouseProject.id,
-            external_tickets: [
-                {
-                    external_id: payload.pull_request.id.toString(),
-                    external_url: payload.pull_request.html_url,
-                },
-            ],
+            external_links: [payload.pull_request.html_url],
         };
         if (clubhouseUserId) {
             body.owner_ids = [clubhouseUserId];

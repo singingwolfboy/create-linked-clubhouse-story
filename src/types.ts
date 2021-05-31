@@ -161,15 +161,6 @@ export interface ClubhouseCommit {
   url: string;
 }
 
-/** A External Ticket allows you to create a link between an external system, like Zendesk, and a Clubhouse story. */
-export interface ClubhouseExternalTicket {
-  epic_ids: number[];
-  external_id: string;
-  external_url: string;
-  id: string;
-  story_ids: number[];
-}
-
 /** A File is any document uploaded to your Clubhouse. Files attached from a third-party service can be accessed using the Linked Files endpoint. */
 export interface ClubhouseFile {
   content_type: string;
@@ -310,7 +301,7 @@ export interface ClubhouseStory {
   epic_id: number | null;
   estimate: number | null;
   external_id: string | null;
-  external_tickets: ClubhouseExternalTicket[];
+  external_links: string[];
   files: ClubhouseFile[];
   follower_ids: string[];
   group_mention_ids: string[];
@@ -349,11 +340,6 @@ export interface ClubhouseCreateStoryCommentParams {
   updated_at?: string;
 }
 
-export interface ClubhouseCreateExternalTicketParams {
-  external_id: string;
-  external_url: string;
-}
-
 /** Request parameters for creating a Label on a Clubhouse story. */
 export interface ClubhouseCreateLabelParams {
   color: string;
@@ -386,7 +372,7 @@ export interface ClubhouseCreateStoryBody {
   epic_id?: number | null;
   estimate?: number | null;
   external_id?: string;
-  external_tickets?: ClubhouseCreateExternalTicketParams[];
+  external_links?: string[];
   file_ids?: number[];
   follower_ids?: string[];
   iteration_id?: number | null;
