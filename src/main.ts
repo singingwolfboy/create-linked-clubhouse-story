@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import { context } from "@actions/github";
-import { EventPayloads } from "@octokit/webhooks";
+import { PullRequestEvent } from "@octokit/webhooks-types";
 import opened from "./opened";
 import closed from "./closed";
 import labeled from "./labeled";
@@ -12,7 +12,7 @@ async function run(): Promise<void> {
     return;
   }
 
-  const payload = context.payload as EventPayloads.WebhookPayloadPullRequest;
+  const payload = context.payload as PullRequestEvent;
   const author = payload.pull_request.user.login;
 
   if (!shouldProcessPullRequestForUser(author)) return;

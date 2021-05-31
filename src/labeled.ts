@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import { context } from "@actions/github";
-import { EventPayloads } from "@octokit/webhooks";
+import { PullRequestLabeledEvent } from "@octokit/webhooks-types";
 import { HttpClient } from "@actions/http-client";
 import {
   getClubhouseStoryIdFromPullRequest,
@@ -12,7 +12,7 @@ import {
 } from "./util";
 
 export default async function labeled(): Promise<void> {
-  const payload = context.payload as EventPayloads.WebhookPayloadPullRequest;
+  const payload = context.payload as PullRequestLabeledEvent;
 
   // Do this up front because we want to return fast if the new label was not
   // configured for Iteration support

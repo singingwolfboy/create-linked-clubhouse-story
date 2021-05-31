@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { EventPayloads } from "@octokit/webhooks";
+import { PullRequestEvent } from "@octokit/webhooks-types";
 import { HttpClient } from "@actions/http-client";
 import Mustache from "mustache";
 import {
@@ -14,7 +14,8 @@ import {
   ClubhouseIterationSlim,
 } from "./types";
 
-export const CLUBHOUSE_STORY_URL_REGEXP = /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
+export const CLUBHOUSE_STORY_URL_REGEXP =
+  /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
 export const CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-/])?ch(\d+)(?:[-/].+)?$/;
 
 interface Stringable {
@@ -154,7 +155,7 @@ export async function getClubhouseUserId(
   });
 
   const octokit = github.getOctokit(GITHUB_TOKEN);
-  const userResponse = await octokit.users.getByUsername({
+  const userResponse = await octokit.rest.users.getByUsername({
     username: githubUsername,
   });
   const user = userResponse.data;
@@ -276,7 +277,7 @@ export async function getClubhouseWorkflowState(
 }
 
 export async function createClubhouseStory(
-  payload: EventPayloads.WebhookPayloadPullRequest,
+  payload: PullRequestEvent,
   http: HttpClient
 ): Promise<ClubhouseStory | null> {
   const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", { required: true });
@@ -354,7 +355,7 @@ export function getClubhouseStoryIdFromBranchName(
 }
 
 export async function getClubhouseURLFromPullRequest(
-  payload: EventPayloads.WebhookPayloadPullRequest
+  payload: PullRequestEvent
 ): Promise<string | null> {
   const GITHUB_TOKEN = core.getInput("github-token", {
     required: true,
@@ -373,7 +374,7 @@ export async function getClubhouseURLFromPullRequest(
     repo: payload.repository.name,
     issue_number: payload.pull_request.number,
   };
-  const commentsResponse = await octokit.issues.listComments(params);
+  const commentsResponse = await octokit.rest.issues.listComments(params);
   if (commentsResponse.status === 200) {
     const commentWithURL = commentsResponse.data.find(
       (comment) => comment.body && CLUBHOUSE_STORY_URL_REGEXP.test(comment.body)
@@ -396,7 +397,7 @@ export async function getClubhouseURLFromPullRequest(
 }
 
 export async function getClubhouseStoryIdFromPullRequest(
-  payload: EventPayloads.WebhookPayloadPullRequest
+  payload: PullRequestEvent
 ): Promise<string | null> {
   const branchName = payload.pull_request.head.ref;
   const storyId = getClubhouseStoryIdFromBranchName(branchName);
@@ -417,7 +418,7 @@ export async function getClubhouseStoryIdFromPullRequest(
 }
 
 export async function addCommentToPullRequest(
-  payload: EventPayloads.WebhookPayloadPullRequest,
+  payload: PullRequestEvent,
   comment: string
 ): Promise<boolean> {
   const GITHUB_TOKEN = core.getInput("github-token", {
@@ -431,7 +432,7 @@ export async function addCommentToPullRequest(
     issue_number: payload.pull_request.number,
     body: comment,
   };
-  const commentResponse = await octokit.issues.createComment(params);
+  const commentResponse = await octokit.rest.issues.createComment(params);
   if (commentResponse.status !== 201) {
     core.setFailed(
       `HTTP ${
