@@ -47,11 +47,11 @@ _before_ the pull request is created.
 
 This Action will specifically check for branch names that follow the naming
 convention for this built-in integration. Any branch name that contains
-`ch####` will be ignored by this Action, on the assumption that a Clubhouse
-story already exists for the pull request. The `ch####` must be separated
+`sc-####` will be ignored by this Action, on the assumption that a Clubhouse
+story already exists for the pull request. The `sc-####` must be separated
 from leading or following text with either a `/` or a `-`. So, branches
-named `ch1`, `prefix/ch23`, `prefix-ch123`, `ch3456/suffix`, `ch3456-suffux`,
-`prefix/ch987/suffix` would match, but `xch123` and `ch987end` would not.
+named `sc-1`, `prefix/sc-23`, `prefix-sc-123`, `sc-3456/suffix`, `sc-3456-suffux`,
+`prefix/sc-987/suffix` would match, but `xsc-123` and `sc-987end` would not.
 
 ## Customizing the Pull Request Comment
 
@@ -180,7 +180,7 @@ Multiple users should be separated by commas.
 ## Iteration Support
 
 Clubhouse supports the concept of [iterations](https://help.clubhouse.io/hc/en-us/articles/360028953452-Iterations-Overview)
- -- time-boxed periods of development for stories. You can configure this Action
+-- time-boxed periods of development for stories. You can configure this Action
 to automatically assign the Clubhouse stories it creates to Clubhouse iterations,
 using GitHub labels and Clubhouse groups to identify the correct iteration to use.
 
@@ -189,7 +189,7 @@ the way you use Clubhouse and GitHub:
 
 - We assume that each team has an associated [Clubhouse group](https://help.clubhouse.io/hc/en-us/articles/360039328751-Groups-Group-Management),
   and that Clubhouse iterations are associated with this group.
-- We assume that the correct iteration to use is the *most recent*
+- We assume that the correct iteration to use is the _most recent_
   in-progress iteration for the group, as determined by the "last updated" time.
   (However, you may exclude specific iterations by name.)
 - We assume that each team has an associated [GitHub label](https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/managing-labels),
@@ -198,7 +198,7 @@ the way you use Clubhouse and GitHub:
   [Labeler Action](https://github.com/actions/labeler).)
 
 If you want to use this feature, and you have a different workflow that
-does *not* match these assumptions, open a GitHub Issue on this repo
+does _not_ match these assumptions, open a GitHub Issue on this repo
 and let's talk about it! Maybe we can find a way to make this Action
 support other workflows, as well.
 

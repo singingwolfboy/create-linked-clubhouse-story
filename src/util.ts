@@ -16,7 +16,7 @@ import {
 
 export const CLUBHOUSE_STORY_URL_REGEXP =
   /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
-export const CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-/])?ch(\d+)(?:[-/].+)?$/;
+export const CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-/])?sc\-(\d+)(?:[-/].+)?$/;
 
 interface Stringable {
   toString(): string;
