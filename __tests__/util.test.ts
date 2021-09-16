@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 test("getClubhouseUserId", async () => {
-  const chScope = nock("https://api.clubhouse.io")
+  const chScope = nock("https://api.shortcut.com")
     .get("/api/v3/members")
     .query(true)
     .reply(200, [
@@ -54,7 +54,7 @@ test("getClubhouseUserId user-map", async () => {
 });
 
 test("getClubhouseProjectByName", async () => {
-  const scope = nock("https://api.clubhouse.io")
+  const scope = nock("https://api.shortcut.com")
     .get("/api/v3/projects")
     .query(true)
     .reply(200, [{ id: "abc", name: "fake-project" }]);
@@ -67,7 +67,7 @@ test("getClubhouseProjectByName", async () => {
 });
 
 test("getClubhouseWorkflowState", async () => {
-  const scope = nock("https://api.clubhouse.io")
+  const scope = nock("https://api.shortcut.com")
     .get("/api/v3/teams/123")
     .query(true)
     .reply(200, {
@@ -130,7 +130,7 @@ describe("createClubhouseStory", () => {
     process.env["INPUT_STORY-DESCRIPTION-TEMPLATE"] =
       "{{{ payload.pull_request.body }}}";
 
-    scope = nock("https://api.clubhouse.io")
+    scope = nock("https://api.shortcut.com")
       .get("/api/v3/projects")
       .query(true)
       .reply(200, [{ id: "abc", name: "fake-project" }]);
@@ -248,7 +248,7 @@ test("getClubhouseURLFromPullRequest", async () => {
 test("getClubhouseURLFromPullRequest desc", async () => {
   const payload = {
     pull_request: {
-      body: "Clubhouse story: https://app.clubhouse.io/org/story/12345",
+      body: "Clubhouse story: https://app.shortcut.com/org/story/12345",
       number: 123,
     },
     repository: {
@@ -260,7 +260,7 @@ test("getClubhouseURLFromPullRequest desc", async () => {
   };
 
   const url = await util.getClubhouseURLFromPullRequest(payload as any);
-  expect(url).toEqual("https://app.clubhouse.io/org/story/12345");
+  expect(url).toEqual("https://app.shortcut.com/org/story/12345");
 });
 
 test("getClubhouseURLFromPullRequest comment", async () => {
@@ -281,11 +281,11 @@ test("getClubhouseURLFromPullRequest comment", async () => {
     .get("/repos/octocat/example/issues/123/comments")
     .reply(200, [
       { body: "no url here, either!" },
-      { body: "Clubhouse story: https://app.clubhouse.io/org/story/12345" },
+      { body: "Clubhouse story: https://app.shortcut.com/org/story/12345" },
     ]);
 
   const url = await util.getClubhouseURLFromPullRequest(payload as any);
-  expect(url).toEqual("https://app.clubhouse.io/org/story/12345");
+  expect(url).toEqual("https://app.shortcut.com/org/story/12345");
 
   scope.done();
 });
@@ -340,7 +340,7 @@ describe("shouldProcessPullRequestForUser", () => {
 
 describe("getLatestMatchingClubhouseIteration", () => {
   test("happy path", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -364,7 +364,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
   });
 
   test("no iterations", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, []);
@@ -379,7 +379,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
   });
 
   test("matching unstarted iteration", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -402,7 +402,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
   });
 
   test("multiple matches", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -447,7 +447,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
   });
 
   test("excludes", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [

@@ -1,13 +1,13 @@
 # Create Linked Clubhouse Story
 
 This is a [GitHub Action](https://github.com/features/actions) that will
-automatically create a story on [Clubhouse](https://clubhouse.io/) when
+automatically create a story on [Clubhouse](https://shortcut.com/) when
 a pull request is opened, unless the pull request already has a link to
 a Clubhouse story in the description.
 
 ## Basic Usage
 
-[Create a Clubhouse API token](https://app.clubhouse.io/settings/account/api-tokens),
+[Create a Clubhouse API token](https://app.shortcut.com/settings/account/api-tokens),
 and store it as an encrypted secret in your GitHub repository settings.
 [Check the GitHub documentation for how to create an encrypted secret.](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets)
 Name this secret `CLUBHOUSE_TOKEN`.
@@ -41,7 +41,7 @@ be in when the pull request is opened, merged, and closed, respectively.
 
 ## Disabled for Built-In Integration
 
-[Clubhouse already has an integration with GitHub.](https://help.clubhouse.io/hc/en-us/articles/207540323-Using-The-Clubhouse-GitHub-Integration)
+[Clubhouse already has an integration with GitHub.](https://help.shortcut.com/hc/en-us/articles/207540323-Using-The-Clubhouse-GitHub-Integration)
 It works for the opposite use-case, assuming that the Clubhouse story exists
 _before_ the pull request is created.
 
@@ -73,7 +73,7 @@ variable, like this:
 ```
 
 This comment template is processed using the [Mustache](https://mustache.github.io/)
-templating system. It receives [the Story object returned from the Clubhouse API](https://clubhouse.io/api/rest/v3/#Story). Note that you may want to use the
+templating system. It receives [the Story object returned from the Clubhouse API](https://shortcut.com/api/rest/v3/#Story). Note that you may want to use the
 triple mustache syntax to disable HTML escaping.
 
 GitHub will automatically process the comment text as [Markdown](https://guides.github.com/features/mastering-markdown/),
@@ -142,9 +142,9 @@ formatted string. Here's an example:
 The keys of this JSON object must be GitHub usernames, while the values
 must be Clubhouse UUIDs that identify members. Unfortunately, these UUIDs
 are not exposed on the Clubhouse website; the best way to look them up is to
-[go to the User Directory for your Clubhouse workspace](https://app.clubhouse.io/settings/users),
+[go to the User Directory for your Clubhouse workspace](https://app.shortcut.com/settings/users),
 open the Developer Tools in your browser, find the API request for
-`https://app.clubhouse.io/backend/api/private/members`,
+`https://app.shortcut.com/backend/api/private/members`,
 and examine the API response to find the `id` for each user.
 Note that Clubhouse makes a distinction between a `User` and a `Member`:
 you need to look up the UUID for the `Member` object.
@@ -179,7 +179,7 @@ Multiple users should be separated by commas.
 
 ## Iteration Support
 
-Clubhouse supports the concept of [iterations](https://help.clubhouse.io/hc/en-us/articles/360028953452-Iterations-Overview)
+Clubhouse supports the concept of [iterations](https://help.shortcut.com/hc/en-us/articles/360028953452-Iterations-Overview)
  -- time-boxed periods of development for stories. You can configure this Action
 to automatically assign the Clubhouse stories it creates to Clubhouse iterations,
 using GitHub labels and Clubhouse groups to identify the correct iteration to use.
@@ -187,7 +187,7 @@ using GitHub labels and Clubhouse groups to identify the correct iteration to us
 In order to use this feature, this Action makes a few assumptions about
 the way you use Clubhouse and GitHub:
 
-- We assume that each team has an associated [Clubhouse group](https://help.clubhouse.io/hc/en-us/articles/360039328751-Groups-Group-Management),
+- We assume that each team has an associated [Clubhouse group](https://help.shortcut.com/hc/en-us/articles/360039328751-Groups-Group-Management),
   and that Clubhouse iterations are associated with this group.
 - We assume that the correct iteration to use is the *most recent*
   in-progress iteration for the group, as determined by the "last updated" time.
