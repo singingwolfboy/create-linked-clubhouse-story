@@ -1,5 +1,12 @@
 # Create Linked Clubhouse Story
 
+**This repository is currently unmaintained.** The author of this
+code no longer uses Clubhouse. Now that [Clubhouse has announced they
+are changing their name to Shortcut](https://shortcut.com/blog/clubhouse-changing-our-name-to-shortcut),
+this seems like a good time to drop maintainership of this project, since
+it will probably take a fair amount of work to fix this project to work with
+the new name.
+
 This is a [GitHub Action](https://github.com/features/actions) that will
 automatically create a story on [Clubhouse](https://clubhouse.io/) when
 a pull request is opened, unless the pull request already has a link to
