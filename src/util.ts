@@ -125,12 +125,12 @@ export async function getClubhouseUserId(
 
   try {
     const membersResponse = await http.getJson<ClubhouseMember[]>(
-      `https://api.clubhoust.io/api/v3/members?token=${CLUBHOUSE_TOKEN}`
+      `https://api.clubhouse.io/api/v3/members?token=${CLUBHOUSE_TOKEN}`
     );
     const members = membersResponse.result;
     if (!members) {
       core.setFailed(
-        `HTTP ${membersResponse.statusCode} https://api.clubhoust.io/api/v3/members`
+        `HTTP ${membersResponse.statusCode} https://api.clubhouse.io/api/v3/members`
       );
       return;
     }
@@ -145,7 +145,7 @@ export async function getClubhouseUserId(
     core.debug(`email to Clubhouse ID: ${stringFromMap(emailToClubhouseId)}`);
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhoust.io/api/v3/members\n${err.message}`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members\n${err.message}`
     );
     return;
   }
@@ -177,18 +177,18 @@ export async function getClubhouseStoryById(
   });
   try {
     const storyResponse = await http.getJson<ClubhouseStory>(
-      `https://api.clubhoust.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`
+      `https://api.clubhouse.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`
     );
     const story = storyResponse.result;
     if (!story) {
       core.setFailed(
-        `HTTP ${storyResponse.statusCode} https://api.clubhoust.io/api/v3/stories/${id}`
+        `HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories/${id}`
       );
     }
     return story;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhoust.io/api/v3/stories/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories/${id}\n${err.message}`
     );
     return null;
   }
@@ -203,12 +203,12 @@ export async function getClubhouseProject(
   });
   try {
     const projectResponse = await http.getJson<ClubhouseProject>(
-      `https://api.clubhoust.io/api/v3/projects/${id}?token=${CLUBHOUSE_TOKEN}`
+      `https://api.clubhouse.io/api/v3/projects/${id}?token=${CLUBHOUSE_TOKEN}`
     );
     return projectResponse.result;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhoust.io/api/v3/projects/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects/${id}\n${err.message}`
     );
     return null;
   }
@@ -223,19 +223,19 @@ export async function getClubhouseProjectByName(
   });
   try {
     const projectsResponse = await http.getJson<ClubhouseProject[]>(
-      `https://api.clubhoust.io/api/v3/projects?token=${CLUBHOUSE_TOKEN}`
+      `https://api.clubhouse.io/api/v3/projects?token=${CLUBHOUSE_TOKEN}`
     );
     const projects = projectsResponse.result;
     if (!projects) {
       core.setFailed(
-        `HTTP ${projectsResponse.statusCode} https://api.clubhoust.io/api/v3/projects`
+        `HTTP ${projectsResponse.statusCode} https://api.clubhouse.io/api/v3/projects`
       );
       return;
     }
     return projects.find((project) => project.name === projectName);
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhoust.io/api/v3/projects\n${err.message}`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects\n${err.message}`
     );
     return;
   }
@@ -254,13 +254,13 @@ export async function getClubhouseWorkflowState(
 
   try {
     const teamResponse = await http.getJson<ClubhouseTeam>(
-      `https://api.clubhoust.io/api/v3/teams/${teamId}?token=${CLUBHOUSE_TOKEN}`
+      `https://api.clubhouse.io/api/v3/teams/${teamId}?token=${CLUBHOUSE_TOKEN}`
     );
 
     const team = teamResponse.result;
     if (!team) {
       core.setFailed(
-        `HTTP ${teamResponse.statusCode} https://api.clubhoust.io/api/v3/teams/${teamId}`
+        `HTTP ${teamResponse.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}`
       );
       return null;
     }
@@ -270,7 +270,7 @@ export async function getClubhouseWorkflowState(
     );
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhoust.io/api/v3/teams/${teamId}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}\n${err.message}`
     );
     return null;
   }
@@ -319,7 +319,7 @@ export async function createClubhouseStory(
 
   try {
     const storyResponse = await http.postJson<ClubhouseStory>(
-      `https://api.clubhoust.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`,
+      `https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`,
       body
     );
     const story = storyResponse.result;
@@ -327,7 +327,7 @@ export async function createClubhouseStory(
       core.setFailed(
         `HTTP ${
           storyResponse.statusCode
-        } https://api.clubhoust.io/api/v3/stories\n${JSON.stringify(body)}`
+        } https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}`
       );
       return null;
     }
@@ -336,7 +336,7 @@ export async function createClubhouseStory(
     core.setFailed(
       `HTTP ${
         err.statusCode
-      } https://api.clubhoust.io/api/v3/stories\n${JSON.stringify(body)}\n${
+      } https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}\n${
         err.message
       }`
     );
@@ -454,19 +454,19 @@ export async function updateClubhouseStoryById(
   });
   try {
     const storyResponse = await http.putJson<ClubhouseStory>(
-      `https://api.clubhoust.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`,
+      `https://api.clubhouse.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`,
       body
     );
     const story = storyResponse.result;
     if (!story) {
       core.setFailed(
-        `HTTP ${storyResponse.statusCode} https://api.clubhoust.io/api/v3/stories/${id}`
+        `HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories/${id}`
       );
     }
     return story;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhoust.io/api/v3/stories/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories/${id}\n${err.message}`
     );
     return null;
   }
@@ -481,12 +481,12 @@ export async function getLatestMatchingClubhouseIteration(
   });
   try {
     const iterationsResponse = await http.getJson<ClubhouseIterationSlim[]>(
-      `https://api.clubhoust.io/api/v3/iterations?token=${CLUBHOUSE_TOKEN}`
+      `https://api.clubhouse.io/api/v3/iterations?token=${CLUBHOUSE_TOKEN}`
     );
     const iterations = iterationsResponse.result;
     if (!iterations) {
       core.setFailed(
-        `HTTP ${iterationsResponse.statusCode} https://api.clubhoust.io/api/v3/iterations`
+        `HTTP ${iterationsResponse.statusCode} https://api.clubhouse.io/api/v3/iterations`
       );
       return;
     }
@@ -515,7 +515,7 @@ export async function getLatestMatchingClubhouseIteration(
     return sortedIterations[0];
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhoust.io/api/v3/iterations\n${err.message}`
+      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/iterations\n${err.message}`
     );
     return;
   }
