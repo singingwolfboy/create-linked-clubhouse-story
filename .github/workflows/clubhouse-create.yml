@@ -5,11 +5,11 @@ on:
     types: [opened]
 
 jobs:
-  clubhouse-create:
+  shortcut-create:
     runs-on: ubuntu-latest
     steps:
-      - uses: Grayscale-Labs/create-linked-clubhouse-story@v1.8
+      - uses: Grayscale-Labs/create-linked-shortcut-story@v1.8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
+          shortcut-token: ${{ secrets.SHORTCUT_TOKEN }}
           project-name: app.gograyscale.com

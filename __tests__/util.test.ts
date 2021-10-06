@@ -6,7 +6,7 @@ import * as util from "../src/util";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 beforeEach(() => {
-  process.env["INPUT_CLUBHOUSE-TOKEN"] = "fake-clubhouse-token";
+  process.env["INPUT_SHORTCUT-TOKEN"] = "fake-shortcut-token";
   process.env["INPUT_GITHUB-TOKEN"] = "fake-github-token";
   process.env["INPUT_PROJECT-NAME"] = "fake-project";
   if (!nock.isActive()) {
@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  delete process.env["INPUT_CLUBHOUSE-TOKEN"];
+  delete process.env["INPUT_SHORTCUT-TOKEN"];
   delete process.env["INPUT_GITHUB-TOKEN"];
   delete process.env["INPUT_PROJECT-NAME"];
   delete process.env["INPUT_ONLY-USERS"];
@@ -23,8 +23,8 @@ afterEach(() => {
   nock.restore();
 });
 
-test("getClubhouseUserId", async () => {
-  const chScope = nock("https://api.clubhouse.io")
+test("getShortcutUserId", async () => {
+  const chScope = nock("https://api.shortcut.io")
     .get("/api/v3/members")
     .query(true)
     .reply(200, [
@@ -35,39 +35,39 @@ test("getClubhouseUserId", async () => {
     .reply(200, { email: "octocat@github.com" });
 
   const http = new HttpClient();
-  const chId = await util.getClubhouseUserId("octocat", http);
+  const chId = await util.getShortcutUserId("octocat", http);
   expect(chId).toEqual("abc");
 
   chScope.done();
   ghScope.done();
 });
 
-test("getClubhouseUserId user-map", async () => {
+test("getShortcutUserId user-map", async () => {
   const USER_MAP = { octocat: "abc" };
   process.env["INPUT_USER-MAP"] = JSON.stringify(USER_MAP);
 
   const http = new HttpClient();
-  const chId = await util.getClubhouseUserId("octocat", http);
+  const chId = await util.getShortcutUserId("octocat", http);
   expect(chId).toEqual("abc");
 
   delete process.env["INPUT_USER-MAP"];
 });
 
-test("getClubhouseProjectByName", async () => {
-  const scope = nock("https://api.clubhouse.io")
+test("getShortcutProjectByName", async () => {
+  const scope = nock("https://api.shortcut.io")
     .get("/api/v3/projects")
     .query(true)
     .reply(200, [{ id: "abc", name: "fake-project" }]);
 
   const http = new HttpClient();
-  const project = await util.getClubhouseProjectByName("fake-project", http);
+  const project = await util.getShortcutProjectByName("fake-project", http);
   expect(project).toEqual({ id: "abc", name: "fake-project" });
 
   scope.done();
 });
 
-test("getClubhouseWorkflowState", async () => {
-  const scope = nock("https://api.clubhouse.io")
+test("getShortcutWorkflowState", async () => {
+  const scope = nock("https://api.shortcut.io")
     .get("/api/v3/teams/123")
     .query(true)
     .reply(200, {
@@ -86,7 +86,7 @@ test("getClubhouseWorkflowState", async () => {
 
   const http = new HttpClient();
   const project = { name: "fake-team", team_id: 123 };
-  const workflowState = await util.getClubhouseWorkflowState(
+  const workflowState = await util.getShortcutWorkflowState(
     "Finished",
     http,
     project as any
@@ -96,7 +96,7 @@ test("getClubhouseWorkflowState", async () => {
   scope.done();
 });
 
-describe("createClubhouseStory", () => {
+describe("createShortcutStory", () => {
   let scope: nock.Scope;
   const http = new HttpClient();
   const payload = {
@@ -130,7 +130,7 @@ describe("createClubhouseStory", () => {
     process.env["INPUT_STORY-DESCRIPTION-TEMPLATE"] =
       "{{{ payload.pull_request.body }}}";
 
-    scope = nock("https://api.clubhouse.io")
+    scope = nock("https://api.shortcut.io")
       .get("/api/v3/projects")
       .query(true)
       .reply(200, [{ id: "abc", name: "fake-project" }]);
@@ -155,7 +155,7 @@ describe("createClubhouseStory", () => {
       })
       .query(true)
       .reply(200, { id: 1 });
-    await util.createClubhouseStory(payload as any, http);
+    await util.createShortcutStory(payload as any, http);
   });
 
   test("with title template", async () => {
@@ -171,7 +171,7 @@ describe("createClubhouseStory", () => {
       })
       .query(true)
       .reply(200, { id: 1 });
-    await util.createClubhouseStory(payload as any, http);
+    await util.createShortcutStory(payload as any, http);
   });
 
   test("with description template", async () => {
@@ -194,7 +194,7 @@ describe("createClubhouseStory", () => {
       })
       .query(true)
       .reply(200, { id: 1 });
-    await util.createClubhouseStory(payload as any, http);
+    await util.createShortcutStory(payload as any, http);
   });
 });
 
@@ -208,20 +208,20 @@ test.each([
   ["prefix-ch6789/suffix-more", "6789"],
   ["prefix/ch7890-suffix", "7890"],
   ["prefix-ch0987-suffix-extra", "0987"],
-])("getClubhouseStoryIdFromBranchName matches %s", (branch, expected) => {
-  const id = util.getClubhouseStoryIdFromBranchName(branch);
+])("getShortcutStoryIdFromBranchName matches %s", (branch, expected) => {
+  const id = util.getShortcutStoryIdFromBranchName(branch);
   expect(id).toEqual(expected);
 });
 
 test.each(["prefix/ch8765+suffix", "ch554X", "ach8765", "this_ch1234"])(
-  "getClubhouseStoryIdFromBranchName does not match %s",
+  "getShortcutStoryIdFromBranchName does not match %s",
   (branch) => {
-    const id = util.getClubhouseStoryIdFromBranchName(branch);
+    const id = util.getShortcutStoryIdFromBranchName(branch);
     expect(id).toBeNull();
   }
 );
 
-test("getClubhouseURLFromPullRequest", async () => {
+test("getShortcutURLFromPullRequest", async () => {
   const payload = {
     pull_request: {
       body: "no url here!",
@@ -239,16 +239,16 @@ test("getClubhouseURLFromPullRequest", async () => {
     .get("/repos/octocat/example/issues/123/comments")
     .reply(200, [{ body: "no url here, either!" }]);
 
-  const url = await util.getClubhouseURLFromPullRequest(payload as any);
+  const url = await util.getShortcutURLFromPullRequest(payload as any);
   expect(url).toBeNull();
 
   scope.done();
 });
 
-test("getClubhouseURLFromPullRequest desc", async () => {
+test("getShortcutURLFromPullRequest desc", async () => {
   const payload = {
     pull_request: {
-      body: "Clubhouse story: https://app.clubhouse.io/org/story/12345",
+      body: "Shortcut story: https://app.shortcut.io/org/story/12345",
       number: 123,
     },
     repository: {
@@ -259,11 +259,11 @@ test("getClubhouseURLFromPullRequest desc", async () => {
     },
   };
 
-  const url = await util.getClubhouseURLFromPullRequest(payload as any);
-  expect(url).toEqual("https://app.clubhouse.io/org/story/12345");
+  const url = await util.getShortcutURLFromPullRequest(payload as any);
+  expect(url).toEqual("https://app.shortcut.io/org/story/12345");
 });
 
-test("getClubhouseURLFromPullRequest comment", async () => {
+test("getShortcutURLFromPullRequest comment", async () => {
   const payload = {
     pull_request: {
       body: "no url here!",
@@ -281,11 +281,11 @@ test("getClubhouseURLFromPullRequest comment", async () => {
     .get("/repos/octocat/example/issues/123/comments")
     .reply(200, [
       { body: "no url here, either!" },
-      { body: "Clubhouse story: https://app.clubhouse.io/org/story/12345" },
+      { body: "Shortcut story: https://app.shortcut.io/org/story/12345" },
     ]);
 
-  const url = await util.getClubhouseURLFromPullRequest(payload as any);
-  expect(url).toEqual("https://app.clubhouse.io/org/story/12345");
+  const url = await util.getShortcutURLFromPullRequest(payload as any);
+  expect(url).toEqual("https://app.shortcut.io/org/story/12345");
 
   scope.done();
 });
@@ -299,7 +299,7 @@ test("shouldProcessPullRequestForUser user in both lists", async () => {
   process.env["INPUT_ONLY-USERS"] = `${author}, fake-user-2`;
   process.env["INPUT_IGNORED-USERS"] = `${author}, fake-user-3`;
   expect(() => util.shouldProcessPullRequestForUser(author)).toThrowError(
-    `PR author ${author} is defined in both ignored-users and only-users lists. Cancelling Clubhouse workflow...`
+    `PR author ${author} is defined in both ignored-users and only-users lists. Cancelling Shortcut workflow...`
   );
 });
 
@@ -338,9 +338,9 @@ describe("shouldProcessPullRequestForUser", () => {
   );
 });
 
-describe("getLatestMatchingClubhouseIteration", () => {
+describe("getLatestMatchingShortcutIteration", () => {
   test("happy path", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.io")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -355,7 +355,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
 
     const iterationInfo = { groupId: "123" };
     const http = new HttpClient();
-    const result = await util.getLatestMatchingClubhouseIteration(
+    const result = await util.getLatestMatchingShortcutIteration(
       iterationInfo,
       http
     );
@@ -364,14 +364,14 @@ describe("getLatestMatchingClubhouseIteration", () => {
   });
 
   test("no iterations", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.io")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, []);
 
     const iterationInfo = { groupId: "123" };
     const http = new HttpClient();
-    const result = await util.getLatestMatchingClubhouseIteration(
+    const result = await util.getLatestMatchingShortcutIteration(
       iterationInfo,
       http
     );
@@ -379,7 +379,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
   });
 
   test("matching unstarted iteration", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.io")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -394,7 +394,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
 
     const iterationInfo = { groupId: "123" };
     const http = new HttpClient();
-    const result = await util.getLatestMatchingClubhouseIteration(
+    const result = await util.getLatestMatchingShortcutIteration(
       iterationInfo,
       http
     );
@@ -402,7 +402,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
   });
 
   test("multiple matches", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.io")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -438,7 +438,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
 
     const iterationInfo = { groupId: "123" };
     const http = new HttpClient();
-    const result = await util.getLatestMatchingClubhouseIteration(
+    const result = await util.getLatestMatchingShortcutIteration(
       iterationInfo,
       http
     );
@@ -447,7 +447,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
   });
 
   test("excludes", async () => {
-    const scope = nock("https://api.clubhouse.io")
+    const scope = nock("https://api.shortcut.io")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -483,7 +483,7 @@ describe("getLatestMatchingClubhouseIteration", () => {
 
     const iterationInfo = { groupId: "123", excludeName: "hij" };
     const http = new HttpClient();
-    const result = await util.getLatestMatchingClubhouseIteration(
+    const result = await util.getLatestMatchingShortcutIteration(
       iterationInfo,
       http
     );
