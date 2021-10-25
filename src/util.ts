@@ -125,12 +125,12 @@ export async function getShortcutUserId(
 
   try {
     const membersResponse = await http.getJson<ShortcutMember[]>(
-      `https://api.shortcut.io/api/v3/members?token=${SHORTCUT_TOKEN}`
+      `https://api.app.shortcut.com/api/v3/members?token=${SHORTCUT_TOKEN}`
     );
     const members = membersResponse.result;
     if (!members) {
       core.setFailed(
-        `HTTP ${membersResponse.statusCode} https://api.shortcut.io/api/v3/members`
+        `HTTP ${membersResponse.statusCode} https://api.app.shortcut.com/api/v3/members`
       );
       return;
     }
@@ -145,7 +145,7 @@ export async function getShortcutUserId(
     core.debug(`email to Shortcut ID: ${stringFromMap(emailToShortcutId)}`);
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.shortcut.io/api/v3/members\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/members\n${err.message}`
     );
     return;
   }
@@ -177,18 +177,18 @@ export async function getShortcutStoryById(
   });
   try {
     const storyResponse = await http.getJson<ShortcutStory>(
-      `https://api.shortcut.io/api/v3/stories/${id}?token=${SHORTCUT_TOKEN}`
+      `https://api.app.shortcut.com/api/v3/stories/${id}?token=${SHORTCUT_TOKEN}`
     );
     const story = storyResponse.result;
     if (!story) {
       core.setFailed(
-        `HTTP ${storyResponse.statusCode} https://api.shortcut.io/api/v3/stories/${id}`
+        `HTTP ${storyResponse.statusCode} https://api.app.shortcut.com/api/v3/stories/${id}`
       );
     }
     return story;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.shortcut.io/api/v3/stories/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/stories/${id}\n${err.message}`
     );
     return null;
   }
@@ -203,12 +203,12 @@ export async function getShortcutProject(
   });
   try {
     const projectResponse = await http.getJson<ShortcutProject>(
-      `https://api.shortcut.io/api/v3/projects/${id}?token=${SHORTCUT_TOKEN}`
+      `https://api.app.shortcut.com/api/v3/projects/${id}?token=${SHORTCUT_TOKEN}`
     );
     return projectResponse.result;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.shortcut.io/api/v3/projects/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/projects/${id}\n${err.message}`
     );
     return null;
   }
@@ -223,19 +223,19 @@ export async function getShortcutProjectByName(
   });
   try {
     const projectsResponse = await http.getJson<ShortcutProject[]>(
-      `https://api.shortcut.io/api/v3/projects?token=${SHORTCUT_TOKEN}`
+      `https://api.app.shortcut.com/api/v3/projects?token=${SHORTCUT_TOKEN}`
     );
     const projects = projectsResponse.result;
     if (!projects) {
       core.setFailed(
-        `HTTP ${projectsResponse.statusCode} https://api.shortcut.io/api/v3/projects`
+        `HTTP ${projectsResponse.statusCode} https://api.app.shortcut.com/api/v3/projects`
       );
       return;
     }
     return projects.find((project) => project.name === projectName);
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.shortcut.io/api/v3/projects\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/projects\n${err.message}`
     );
     return;
   }
@@ -254,13 +254,13 @@ export async function getShortcutWorkflowState(
 
   try {
     const teamResponse = await http.getJson<ShortcutTeam>(
-      `https://api.shortcut.io/api/v3/teams/${teamId}?token=${SHORTCUT_TOKEN}`
+      `https://api.app.shortcut.com/api/v3/teams/${teamId}?token=${SHORTCUT_TOKEN}`
     );
 
     const team = teamResponse.result;
     if (!team) {
       core.setFailed(
-        `HTTP ${teamResponse.statusCode} https://api.shortcut.io/api/v3/teams/${teamId}`
+        `HTTP ${teamResponse.statusCode} https://api.app.shortcut.com/api/v3/teams/${teamId}`
       );
       return null;
     }
@@ -270,7 +270,7 @@ export async function getShortcutWorkflowState(
     );
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.shortcut.io/api/v3/teams/${teamId}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/teams/${teamId}\n${err.message}`
     );
     return null;
   }
@@ -319,7 +319,7 @@ export async function createShortcutStory(
 
   try {
     const storyResponse = await http.postJson<ShortcutStory>(
-      `https://api.shortcut.io/api/v3/stories?token=${SHORTCUT_TOKEN}`,
+      `https://api.app.shortcut.com/api/v3/stories?token=${SHORTCUT_TOKEN}`,
       body
     );
     const story = storyResponse.result;
@@ -327,7 +327,7 @@ export async function createShortcutStory(
       core.setFailed(
         `HTTP ${
           storyResponse.statusCode
-        } https://api.shortcut.io/api/v3/stories\n${JSON.stringify(body)}`
+        } https://api.app.shortcut.com/api/v3/stories\n${JSON.stringify(body)}`
       );
       return null;
     }
@@ -336,7 +336,7 @@ export async function createShortcutStory(
     core.setFailed(
       `HTTP ${
         err.statusCode
-      } https://api.shortcut.io/api/v3/stories\n${JSON.stringify(body)}\n${
+      } https://api.app.shortcut.com/api/v3/stories\n${JSON.stringify(body)}\n${
         err.message
       }`
     );
@@ -454,19 +454,19 @@ export async function updateShortcutStoryById(
   });
   try {
     const storyResponse = await http.putJson<ShortcutStory>(
-      `https://api.shortcut.io/api/v3/stories/${id}?token=${SHORTCUT_TOKEN}`,
+      `https://api.app.shortcut.com/api/v3/stories/${id}?token=${SHORTCUT_TOKEN}`,
       body
     );
     const story = storyResponse.result;
     if (!story) {
       core.setFailed(
-        `HTTP ${storyResponse.statusCode} https://api.shortcut.io/api/v3/stories/${id}`
+        `HTTP ${storyResponse.statusCode} https://api.app.shortcut.com/api/v3/stories/${id}`
       );
     }
     return story;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.shortcut.io/api/v3/stories/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/stories/${id}\n${err.message}`
     );
     return null;
   }
@@ -481,12 +481,12 @@ export async function getLatestMatchingShortcutIteration(
   });
   try {
     const iterationsResponse = await http.getJson<ShortcutIterationSlim[]>(
-      `https://api.shortcut.io/api/v3/iterations?token=${SHORTCUT_TOKEN}`
+      `https://api.app.shortcut.com/api/v3/iterations?token=${SHORTCUT_TOKEN}`
     );
     const iterations = iterationsResponse.result;
     if (!iterations) {
       core.setFailed(
-        `HTTP ${iterationsResponse.statusCode} https://api.shortcut.io/api/v3/iterations`
+        `HTTP ${iterationsResponse.statusCode} https://api.app.shortcut.com/api/v3/iterations`
       );
       return;
     }
@@ -515,7 +515,7 @@ export async function getLatestMatchingShortcutIteration(
     return sortedIterations[0];
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.shortcut.io/api/v3/iterations\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/iterations\n${err.message}`
     );
     return;
   }

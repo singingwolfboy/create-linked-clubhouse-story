@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 test("getShortcutUserId", async () => {
-  const chScope = nock("https://api.shortcut.io")
+  const chScope = nock("https://api.app.shortcut.com")
     .get("/api/v3/members")
     .query(true)
     .reply(200, [
@@ -54,7 +54,7 @@ test("getShortcutUserId user-map", async () => {
 });
 
 test("getShortcutProjectByName", async () => {
-  const scope = nock("https://api.shortcut.io")
+  const scope = nock("https://api.app.shortcut.com")
     .get("/api/v3/projects")
     .query(true)
     .reply(200, [{ id: "abc", name: "fake-project" }]);
@@ -67,7 +67,7 @@ test("getShortcutProjectByName", async () => {
 });
 
 test("getShortcutWorkflowState", async () => {
-  const scope = nock("https://api.shortcut.io")
+  const scope = nock("https://api.app.shortcut.com")
     .get("/api/v3/teams/123")
     .query(true)
     .reply(200, {
@@ -130,7 +130,7 @@ describe("createShortcutStory", () => {
     process.env["INPUT_STORY-DESCRIPTION-TEMPLATE"] =
       "{{{ payload.pull_request.body }}}";
 
-    scope = nock("https://api.shortcut.io")
+    scope = nock("https://api.app.shortcut.com")
       .get("/api/v3/projects")
       .query(true)
       .reply(200, [{ id: "abc", name: "fake-project" }]);
@@ -340,7 +340,7 @@ describe("shouldProcessPullRequestForUser", () => {
 
 describe("getLatestMatchingShortcutIteration", () => {
   test("happy path", async () => {
-    const scope = nock("https://api.shortcut.io")
+    const scope = nock("https://api.app.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -364,7 +364,7 @@ describe("getLatestMatchingShortcutIteration", () => {
   });
 
   test("no iterations", async () => {
-    const scope = nock("https://api.shortcut.io")
+    const scope = nock("https://api.app.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, []);
@@ -379,7 +379,7 @@ describe("getLatestMatchingShortcutIteration", () => {
   });
 
   test("matching unstarted iteration", async () => {
-    const scope = nock("https://api.shortcut.io")
+    const scope = nock("https://api.app.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -402,7 +402,7 @@ describe("getLatestMatchingShortcutIteration", () => {
   });
 
   test("multiple matches", async () => {
-    const scope = nock("https://api.shortcut.io")
+    const scope = nock("https://api.app.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
@@ -447,7 +447,7 @@ describe("getLatestMatchingShortcutIteration", () => {
   });
 
   test("excludes", async () => {
-    const scope = nock("https://api.shortcut.io")
+    const scope = nock("https://api.app.shortcut.com")
       .get("/api/v3/iterations")
       .query(true)
       .reply(200, [
