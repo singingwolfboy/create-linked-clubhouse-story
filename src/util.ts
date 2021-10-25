@@ -4,19 +4,19 @@ import { PullRequestEvent } from "@octokit/webhooks-types";
 import { HttpClient } from "@actions/http-client";
 import Mustache from "mustache";
 import {
-  ClubhouseMember,
-  ClubhouseProject,
-  ClubhouseStory,
-  ClubhouseCreateStoryBody,
-  ClubhouseUpdateStoryBody,
-  ClubhouseWorkflowState,
-  ClubhouseTeam,
-  ClubhouseIterationSlim,
+  ShortcutMember,
+  ShortcutProject,
+  ShortcutStory,
+  ShortcutCreateStoryBody,
+  ShortcutUpdateStoryBody,
+  ShortcutWorkflowState,
+  ShortcutTeam,
+  ShortcutIterationSlim,
 } from "./types";
 
-export const CLUBHOUSE_STORY_URL_REGEXP =
-  /https:\/\/app.clubhouse.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
-export const CLUBHOUSE_BRANCH_NAME_REGEXP = /^(?:.+[-/])?ch(\d+)(?:[-/].+)?$/;
+export const SHORTCUT_STORY_URL_REGEXP =
+  /https:\/\/app.shortcut.com\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
+export const SHORTCUT_BRANCH_NAME_REGEXP = /^(?:.+[-/])?sc(\d+)(?:[-/].+)?$/;
 
 interface Stringable {
   toString(): string;
@@ -43,14 +43,14 @@ export function shouldProcessPullRequestForUser(user: string): boolean {
 
   if (ignoredUsers.size === 0 && onlyUsers.size === 0) {
     core.debug(
-      "No users defined in only-users or ignored-users. Proceeding with Clubhouse workflow..."
+      "No users defined in only-users or ignored-users. Proceeding with Shortcut workflow..."
     );
     return true;
   }
 
   if (onlyUsers.size > 0 && ignoredUsers.size > 0) {
     if (onlyUsers.has(user) && ignoredUsers.has(user)) {
-      const errorMessage = `PR author ${user} is defined in both ignored-users and only-users lists. Cancelling Clubhouse workflow...`;
+      const errorMessage = `PR author ${user} is defined in both ignored-users and only-users lists. Cancelling Shortcut workflow...`;
       core.setFailed(errorMessage);
       throw new Error(errorMessage);
     } else {
@@ -63,7 +63,7 @@ export function shouldProcessPullRequestForUser(user: string): boolean {
   if (onlyUsers.size > 0) {
     if (onlyUsers.has(user)) {
       core.debug(
-        `PR author ${user} is defined in only-users list. Proceeding with Clubhouse workflow...`
+        `PR author ${user} is defined in only-users list. Proceeding with Shortcut workflow...`
       );
       return true;
     } else {
@@ -82,7 +82,7 @@ export function shouldProcessPullRequestForUser(user: string): boolean {
       return false;
     } else {
       core.debug(
-        `PR author ${user} is NOT defined in ignored-users list. Proceeding with Clubhouse workflow...`
+        `PR author ${user} is NOT defined in ignored-users list. Proceeding with Shortcut workflow...`
       );
       return true;
     }
@@ -101,7 +101,7 @@ export function getUserListAsSet(userList: string): Set<string> {
   return s;
 }
 
-export async function getClubhouseUserId(
+export async function getShortcutUserId(
   githubUsername: string,
   http: HttpClient
 ): Promise<string | undefined> {
@@ -117,35 +117,35 @@ export async function getClubhouseUserId(
     }
   }
 
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+  const SHORTCUT_TOKEN = core.getInput("shortcut-token", {
     required: true,
   });
 
-  let emailToClubhouseId;
+  let emailToShortcutId;
 
   try {
-    const membersResponse = await http.getJson<ClubhouseMember[]>(
-      `https://api.clubhouse.io/api/v3/members?token=${CLUBHOUSE_TOKEN}`
+    const membersResponse = await http.getJson<ShortcutMember[]>(
+      `https://api.app.shortcut.com/api/v3/members?token=${SHORTCUT_TOKEN}`
     );
     const members = membersResponse.result;
     if (!members) {
       core.setFailed(
-        `HTTP ${membersResponse.statusCode} https://api.clubhouse.io/api/v3/members`
+        `HTTP ${membersResponse.statusCode} https://api.app.shortcut.com/api/v3/members`
       );
       return;
     }
-    emailToClubhouseId = members.reduce((e2id, member) => {
+    emailToShortcutId = members.reduce((e2id, member) => {
       const email = member.profile.email_address;
-      const clubhouseId = member.id;
+      const shortcutId = member.id;
       if (email) {
-        e2id.set(email, clubhouseId);
+        e2id.set(email, shortcutId);
       }
       return e2id;
     }, new Map<string, string>());
-    core.debug(`email to Clubhouse ID: ${stringFromMap(emailToClubhouseId)}`);
+    core.debug(`email to Shortcut ID: ${stringFromMap(emailToShortcutId)}`);
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/members\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/members\n${err.message}`
     );
     return;
   }
@@ -160,7 +160,7 @@ export async function getClubhouseUserId(
   });
   const user = userResponse.data;
   if (user.email) {
-    return emailToClubhouseId.get(user.email);
+    return emailToShortcutId.get(user.email);
   } else {
     core.warning(
       `could not get email address for GitHub user @${githubUsername}`
@@ -168,99 +168,99 @@ export async function getClubhouseUserId(
   }
 }
 
-export async function getClubhouseStoryById(
+export async function getShortcutStoryById(
   id: number | string,
   http: HttpClient
-): Promise<ClubhouseStory | null> {
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+): Promise<ShortcutStory | null> {
+  const SHORTCUT_TOKEN = core.getInput("shortcut-token", {
     required: true,
   });
   try {
-    const storyResponse = await http.getJson<ClubhouseStory>(
-      `https://api.clubhouse.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`
+    const storyResponse = await http.getJson<ShortcutStory>(
+      `https://api.app.shortcut.com/api/v3/stories/${id}?token=${SHORTCUT_TOKEN}`
     );
     const story = storyResponse.result;
     if (!story) {
       core.setFailed(
-        `HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories/${id}`
+        `HTTP ${storyResponse.statusCode} https://api.app.shortcut.com/api/v3/stories/${id}`
       );
     }
     return story;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/stories/${id}\n${err.message}`
     );
     return null;
   }
 }
 
-export async function getClubhouseProject(
+export async function getShortcutProject(
   id: number | string,
   http: HttpClient
-): Promise<ClubhouseProject | null> {
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+): Promise<ShortcutProject | null> {
+  const SHORTCUT_TOKEN = core.getInput("shortcut-token", {
     required: true,
   });
   try {
-    const projectResponse = await http.getJson<ClubhouseProject>(
-      `https://api.clubhouse.io/api/v3/projects/${id}?token=${CLUBHOUSE_TOKEN}`
+    const projectResponse = await http.getJson<ShortcutProject>(
+      `https://api.app.shortcut.com/api/v3/projects/${id}?token=${SHORTCUT_TOKEN}`
     );
     return projectResponse.result;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/projects/${id}\n${err.message}`
     );
     return null;
   }
 }
 
-export async function getClubhouseProjectByName(
+export async function getShortcutProjectByName(
   projectName: string,
   http: HttpClient
-): Promise<ClubhouseProject | undefined> {
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+): Promise<ShortcutProject | undefined> {
+  const SHORTCUT_TOKEN = core.getInput("shortcut-token", {
     required: true,
   });
   try {
-    const projectsResponse = await http.getJson<ClubhouseProject[]>(
-      `https://api.clubhouse.io/api/v3/projects?token=${CLUBHOUSE_TOKEN}`
+    const projectsResponse = await http.getJson<ShortcutProject[]>(
+      `https://api.app.shortcut.com/api/v3/projects?token=${SHORTCUT_TOKEN}`
     );
     const projects = projectsResponse.result;
     if (!projects) {
       core.setFailed(
-        `HTTP ${projectsResponse.statusCode} https://api.clubhouse.io/api/v3/projects`
+        `HTTP ${projectsResponse.statusCode} https://api.app.shortcut.com/api/v3/projects`
       );
       return;
     }
     return projects.find((project) => project.name === projectName);
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/projects\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/projects\n${err.message}`
     );
     return;
   }
 }
 
-export async function getClubhouseWorkflowState(
+export async function getShortcutWorkflowState(
   stateName: string,
   http: HttpClient,
-  project: ClubhouseProject
-): Promise<ClubhouseWorkflowState | null> {
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+  project: ShortcutProject
+): Promise<ShortcutWorkflowState | null> {
+  const SHORTCUT_TOKEN = core.getInput("shortcut-token", {
     required: true,
   });
 
   const teamId = project.team_id;
 
   try {
-    const teamResponse = await http.getJson<ClubhouseTeam>(
-      `https://api.clubhouse.io/api/v3/teams/${teamId}?token=${CLUBHOUSE_TOKEN}`
+    const teamResponse = await http.getJson<ShortcutTeam>(
+      `https://api.app.shortcut.com/api/v3/teams/${teamId}?token=${SHORTCUT_TOKEN}`
     );
 
     const team = teamResponse.result;
     if (!team) {
       core.setFailed(
-        `HTTP ${teamResponse.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}`
+        `HTTP ${teamResponse.statusCode} https://api.app.shortcut.com/api/v3/teams/${teamId}`
       );
       return null;
     }
@@ -270,17 +270,17 @@ export async function getClubhouseWorkflowState(
     );
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/teams/${teamId}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/teams/${teamId}\n${err.message}`
     );
     return null;
   }
 }
 
-export async function createClubhouseStory(
+export async function createShortcutStory(
   payload: PullRequestEvent,
   http: HttpClient
-): Promise<ClubhouseStory | null> {
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", { required: true });
+): Promise<ShortcutStory | null> {
+  const SHORTCUT_TOKEN = core.getInput("shortcut-token", { required: true });
   const PROJECT_NAME = core.getInput("project-name", { required: true });
   const STATE_NAME = core.getInput("opened-state-name");
   const TITLE_TEMPLATE = core.getInput("story-title-template");
@@ -290,27 +290,27 @@ export async function createClubhouseStory(
   const description = Mustache.render(DESCRIPTION_TEMPLATE, { payload });
 
   const githubUsername = payload.pull_request.user.login;
-  const clubhouseUserId = await getClubhouseUserId(githubUsername, http);
-  const clubhouseProject = await getClubhouseProjectByName(PROJECT_NAME, http);
-  if (!clubhouseProject) {
-    core.setFailed(`Could not find Clubhouse project: ${PROJECT_NAME}`);
+  const shortcutUserId = await getShortcutUserId(githubUsername, http);
+  const shortcutProject = await getShortcutProjectByName(PROJECT_NAME, http);
+  if (!shortcutProject) {
+    core.setFailed(`Could not find Shortcut project: ${PROJECT_NAME}`);
     return null;
   }
 
-  const body: ClubhouseCreateStoryBody = {
+  const body: ShortcutCreateStoryBody = {
     name: title,
     description,
-    project_id: clubhouseProject.id,
+    project_id: shortcutProject.id,
     external_links: [payload.pull_request.html_url],
   };
-  if (clubhouseUserId) {
-    body.owner_ids = [clubhouseUserId];
+  if (shortcutUserId) {
+    body.owner_ids = [shortcutUserId];
   }
   if (STATE_NAME) {
-    const workflowState = await getClubhouseWorkflowState(
+    const workflowState = await getShortcutWorkflowState(
       STATE_NAME,
       http,
-      clubhouseProject
+      shortcutProject
     );
     if (workflowState) {
       body.workflow_state_id = workflowState.id;
@@ -318,8 +318,8 @@ export async function createClubhouseStory(
   }
 
   try {
-    const storyResponse = await http.postJson<ClubhouseStory>(
-      `https://api.clubhouse.io/api/v3/stories?token=${CLUBHOUSE_TOKEN}`,
+    const storyResponse = await http.postJson<ShortcutStory>(
+      `https://api.app.shortcut.com/api/v3/stories?token=${SHORTCUT_TOKEN}`,
       body
     );
     const story = storyResponse.result;
@@ -327,7 +327,7 @@ export async function createClubhouseStory(
       core.setFailed(
         `HTTP ${
           storyResponse.statusCode
-        } https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}`
+        } https://api.app.shortcut.com/api/v3/stories\n${JSON.stringify(body)}`
       );
       return null;
     }
@@ -336,7 +336,7 @@ export async function createClubhouseStory(
     core.setFailed(
       `HTTP ${
         err.statusCode
-      } https://api.clubhouse.io/api/v3/stories\n${JSON.stringify(body)}\n${
+      } https://api.app.shortcut.com/api/v3/stories\n${JSON.stringify(body)}\n${
         err.message
       }`
     );
@@ -344,25 +344,25 @@ export async function createClubhouseStory(
   }
 }
 
-export function getClubhouseStoryIdFromBranchName(
+export function getShortcutStoryIdFromBranchName(
   branchName: string
 ): string | null {
-  const match = branchName.match(CLUBHOUSE_BRANCH_NAME_REGEXP);
+  const match = branchName.match(SHORTCUT_BRANCH_NAME_REGEXP);
   if (match) {
     return match[1];
   }
   return null;
 }
 
-export async function getClubhouseURLFromPullRequest(
+export async function getShortcutURLFromPullRequest(
   payload: PullRequestEvent
 ): Promise<string | null> {
   const GITHUB_TOKEN = core.getInput("github-token", {
     required: true,
   });
 
-  // is there a clubhouse link in the description?
-  const results = payload.pull_request.body?.match(CLUBHOUSE_STORY_URL_REGEXP);
+  // is there a shortcut link in the description?
+  const results = payload.pull_request.body?.match(SHORTCUT_STORY_URL_REGEXP);
   if (results) {
     return results[0];
   }
@@ -377,10 +377,10 @@ export async function getClubhouseURLFromPullRequest(
   const commentsResponse = await octokit.rest.issues.listComments(params);
   if (commentsResponse.status === 200) {
     const commentWithURL = commentsResponse.data.find(
-      (comment) => comment.body && CLUBHOUSE_STORY_URL_REGEXP.test(comment.body)
+      (comment) => comment.body && SHORTCUT_STORY_URL_REGEXP.test(comment.body)
     );
     if (commentWithURL) {
-      const match = commentWithURL.body?.match(CLUBHOUSE_STORY_URL_REGEXP);
+      const match = commentWithURL.body?.match(SHORTCUT_STORY_URL_REGEXP);
       if (match) {
         return match[0];
       }
@@ -396,21 +396,21 @@ export async function getClubhouseURLFromPullRequest(
   return null;
 }
 
-export async function getClubhouseStoryIdFromPullRequest(
+export async function getShortcutStoryIdFromPullRequest(
   payload: PullRequestEvent
 ): Promise<string | null> {
   const branchName = payload.pull_request.head.ref;
-  const storyId = getClubhouseStoryIdFromBranchName(branchName);
+  const storyId = getShortcutStoryIdFromBranchName(branchName);
   if (storyId) {
     return storyId;
   }
 
-  const clubhouseURL = await getClubhouseURLFromPullRequest(payload);
-  if (!clubhouseURL) {
+  const shortcutURL = await getShortcutURLFromPullRequest(payload);
+  if (!shortcutURL) {
     return null;
   }
 
-  const match = clubhouseURL.match(CLUBHOUSE_STORY_URL_REGEXP);
+  const match = shortcutURL.match(SHORTCUT_STORY_URL_REGEXP);
   if (match) {
     return match[1];
   }
@@ -444,49 +444,49 @@ export async function addCommentToPullRequest(
   return true;
 }
 
-export async function updateClubhouseStoryById(
+export async function updateShortcutStoryById(
   id: number | string,
   http: HttpClient,
-  body: ClubhouseUpdateStoryBody
-): Promise<ClubhouseStory | null> {
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+  body: ShortcutUpdateStoryBody
+): Promise<ShortcutStory | null> {
+  const SHORTCUT_TOKEN = core.getInput("shortcut-token", {
     required: true,
   });
   try {
-    const storyResponse = await http.putJson<ClubhouseStory>(
-      `https://api.clubhouse.io/api/v3/stories/${id}?token=${CLUBHOUSE_TOKEN}`,
+    const storyResponse = await http.putJson<ShortcutStory>(
+      `https://api.app.shortcut.com/api/v3/stories/${id}?token=${SHORTCUT_TOKEN}`,
       body
     );
     const story = storyResponse.result;
     if (!story) {
       core.setFailed(
-        `HTTP ${storyResponse.statusCode} https://api.clubhouse.io/api/v3/stories/${id}`
+        `HTTP ${storyResponse.statusCode} https://api.app.shortcut.com/api/v3/stories/${id}`
       );
     }
     return story;
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/stories/${id}\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/stories/${id}\n${err.message}`
     );
     return null;
   }
 }
 
-export async function getLatestMatchingClubhouseIteration(
+export async function getLatestMatchingShortcutIteration(
   iterationInfo: IterationInfo,
   http: HttpClient
-): Promise<ClubhouseIterationSlim | undefined> {
-  const CLUBHOUSE_TOKEN = core.getInput("clubhouse-token", {
+): Promise<ShortcutIterationSlim | undefined> {
+  const SHORTCUT_TOKEN = core.getInput("shortcut-token", {
     required: true,
   });
   try {
-    const iterationsResponse = await http.getJson<ClubhouseIterationSlim[]>(
-      `https://api.clubhouse.io/api/v3/iterations?token=${CLUBHOUSE_TOKEN}`
+    const iterationsResponse = await http.getJson<ShortcutIterationSlim[]>(
+      `https://api.app.shortcut.com/api/v3/iterations?token=${SHORTCUT_TOKEN}`
     );
     const iterations = iterationsResponse.result;
     if (!iterations) {
       core.setFailed(
-        `HTTP ${iterationsResponse.statusCode} https://api.clubhouse.io/api/v3/iterations`
+        `HTTP ${iterationsResponse.statusCode} https://api.app.shortcut.com/api/v3/iterations`
       );
       return;
     }
@@ -515,13 +515,13 @@ export async function getLatestMatchingClubhouseIteration(
     return sortedIterations[0];
   } catch (err) {
     core.setFailed(
-      `HTTP ${err.statusCode} https://api.clubhouse.io/api/v3/iterations\n${err.message}`
+      `HTTP ${err.statusCode} https://api.app.shortcut.com/api/v3/iterations\n${err.message}`
     );
     return;
   }
 }
 
-export function getClubhouseIterationInfo(
+export function getShortcutIterationInfo(
   githubLabel: string
 ): IterationInfo | undefined {
   const LABEL_MAP_STRING = core.getInput("label-iteration-group-map");
