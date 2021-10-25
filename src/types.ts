@@ -1,5 +1,5 @@
-/** Icons are used to attach images to Organizations, Members, and Loading screens in the Clubhouse web application. */
-export interface ClubhouseUserIcon {
+/** Icons are used to attach images to Organizations, Members, and Loading screens in the Shortcut web application. */
+export interface ShortcutUserIcon {
   entity_type: "user-icon";
   id: string;
   created_at: string;
@@ -8,7 +8,7 @@ export interface ClubhouseUserIcon {
 }
 
 /** A group of Member profile details. */
-export interface ClubhouseMemberProfile {
+export interface ShortcutMemberProfile {
   entity_type: "profile";
   id: string;
   deactivated: boolean;
@@ -16,12 +16,12 @@ export interface ClubhouseMemberProfile {
   mention_name: string;
   name: string | null;
   gravatar_hash: string | null;
-  display_icon: ClubhouseUserIcon | null;
+  display_icon: ShortcutUserIcon | null;
   email_address: string | null;
 }
 
-/** Details about individual Clubhouse user within the Clubhouse organization that has issued the token. */
-export interface ClubhouseMember {
+/** Details about individual Shortcut user within the Shortcut organization that has issued the token. */
+export interface ShortcutMember {
   entity_type: "member";
   id: string;
   created_at: string;
@@ -30,18 +30,18 @@ export interface ClubhouseMember {
   disabled: boolean;
   created_without_invite: false;
   group_ids: string[];
-  profile: ClubhouseMemberProfile;
+  profile: ShortcutMemberProfile;
 }
 
 /** A group of calculated values for this Project. */
-export interface ClubhouseProjectStats {
+export interface ShortcutProjectStats {
   num_points: number;
   num_related_documents: number;
   num_stories: number;
 }
 
 /** Projects typically map to teams (such as Frontend, Backend, Mobile, Devops, etc) but can represent any open-ended product, component, or initiative. */
-export interface ClubhouseProject {
+export interface ShortcutProject {
   entity_type: "project";
   abbreviation: string | null;
   app_url: string;
@@ -57,13 +57,13 @@ export interface ClubhouseProject {
   name: string;
   show_thermometer: boolean;
   start_time: string;
-  stats: ClubhouseProjectStats;
+  stats: ShortcutProjectStats;
   team_id: number;
   updated_at: string | null;
 }
 
 /** Group of Projects with the same Workflow. */
-export interface ClubhouseTeam {
+export interface ShortcutTeam {
   entity_type: "team";
   created_at: string;
   description: string;
@@ -72,11 +72,11 @@ export interface ClubhouseTeam {
   position: number;
   project_ids: number[];
   updated_at: string;
-  workflow: ClubhouseWorkflow;
+  workflow: ShortcutWorkflow;
 }
 
 /** Details of the workflow associated with the Team. */
-export interface ClubhouseWorkflow {
+export interface ShortcutWorkflow {
   entity_type: "workflow";
   auto_assign_owner: boolean;
   created_at: string;
@@ -85,13 +85,13 @@ export interface ClubhouseWorkflow {
   id: number;
   name: string;
   project_ids: number[];
-  states: ClubhouseWorkflowState[];
+  states: ShortcutWorkflowState[];
   team_id: number;
   updated_at: string;
 }
 
 /** Workflow State is any of the at least 3 columns. Workflow States correspond to one of 3 types: Unstarted, Started, or Done. */
-export interface ClubhouseWorkflowState {
+export interface ShortcutWorkflowState {
   entity_type: "workflow-state";
   color: string;
   created_at: string;
@@ -106,8 +106,8 @@ export interface ClubhouseWorkflowState {
   verb: string | null;
 }
 
-/** Branch refers to a GitHub branch. Branches are feature branches associated with Clubhouse Stories. */
-export interface ClubhouseBranch {
+/** Branch refers to a GitHub branch. Branches are feature branches associated with Shortcut Stories. */
+export interface ShortcutBranch {
   entity_type: "branch";
   created_at: string | null;
   deleted: boolean;
@@ -115,14 +115,14 @@ export interface ClubhouseBranch {
   merged_branch_ids: number[];
   name: string;
   persistent: boolean;
-  pull_requests: ClubhousePullRequest[];
+  pull_requests: ShortcutPullRequest[];
   repository_id: number | null;
   updated_at: string | null;
   url: string;
 }
 
 /** A Comment is any note added within the Comment field of a Story. */
-export interface ClubhouseComment {
+export interface ShortcutComment {
   entity_type: "comment";
   app_url: string;
   author_id: string | null;
@@ -138,17 +138,17 @@ export interface ClubhouseComment {
 }
 
 /** The Identity of the GitHub user that authored the Commit. */
-export interface ClubhouseIdentity {
+export interface ShortcutIdentity {
   entity_type: "identity";
   name: string | null;
   type: "github";
 }
 
 /** Commit refers to a GitHub commit and all associated details. */
-export interface ClubhouseCommit {
+export interface ShortcutCommit {
   author_email: string;
   author_id: string | null;
-  author_identity: ClubhouseIdentity;
+  author_identity: ShortcutIdentity;
   created_at: string;
   entity_type: "commit";
   hash: string;
@@ -161,8 +161,8 @@ export interface ClubhouseCommit {
   url: string;
 }
 
-/** A File is any document uploaded to your Clubhouse. Files attached from a third-party service can be accessed using the Linked Files endpoint. */
-export interface ClubhouseFile {
+/** A File is any document uploaded to your Shortcut. Files attached from a third-party service can be accessed using the Linked Files endpoint. */
+export interface ShortcutFile {
   content_type: string;
   created_at: string;
   description: string | null;
@@ -182,7 +182,7 @@ export interface ClubhouseFile {
 }
 
 /** A Label can be used to associate and filter Stories and Epics, and also create new Workspaces. */
-export interface ClubhouseLabel {
+export interface ShortcutLabel {
   app_url: string;
   archived: boolean;
   color: string | null;
@@ -192,12 +192,12 @@ export interface ClubhouseLabel {
   external_id: string | null;
   id: number;
   name: string;
-  stats: ClubhouseLabelStats;
+  stats: ShortcutLabelStats;
   updated_at: string | null;
 }
 
 /** A group of calculated values for this Label. */
-export interface ClubhouseLabelStats {
+export interface ShortcutLabelStats {
   num_epics: number;
   num_points_completed: number;
   num_points_in_progress: number;
@@ -210,12 +210,12 @@ export interface ClubhouseLabelStats {
 }
 
 /** The stats object for Stories. */
-export interface ClubhouseStoryStats {
+export interface ShortcutStoryStats {
   num_related_documents: number;
 }
 
-/** Linked files are stored on a third-party website and linked to one or more Stories. Clubhouse currently supports linking files from Google Drive, Dropbox, Box, and by URL. */
-export interface ClubhouseLinkedFile {
+/** Linked files are stored on a third-party website and linked to one or more Stories. Shortcut currently supports linking files from Google Drive, Dropbox, Box, and by URL. */
+export interface ShortcutLinkedFile {
   content_type: string | null;
   created_at: string;
   description: string | null;
@@ -233,8 +233,8 @@ export interface ClubhouseLinkedFile {
   url: string;
 }
 
-/** Corresponds to a GitHub Pull Request attached to a Clubhouse story. */
-export interface ClubhousePullRequest {
+/** Corresponds to a GitHub Pull Request attached to a Shortcut story. */
+export interface ShortcutPullRequest {
   branch_id: number;
   branch_name: string;
   closed: boolean;
@@ -254,7 +254,7 @@ export interface ClubhousePullRequest {
 }
 
 /** The type of Story Link. The string can be subject or object.  */
-export interface ClubhouseTypedStoryLink {
+export interface ShortcutTypedStoryLink {
   created_at: string;
   entity_type: "typed_story_link";
   id: number;
@@ -265,7 +265,7 @@ export interface ClubhouseTypedStoryLink {
   verb: string;
 }
 
-export interface ClubhouseTask {
+export interface ShortcutTask {
   complete: boolean;
   completed_at: string | null;
   created_at: string;
@@ -281,16 +281,16 @@ export interface ClubhouseTask {
   updated_at: string | null;
 }
 
-/** Stories are the standard unit of work in Clubhouse and represent individual features, bugs, and chores. */
-export interface ClubhouseStory {
+/** Stories are the standard unit of work in Shortcut and represent individual features, bugs, and chores. */
+export interface ShortcutStory {
   entity_type: "story";
   app_url: string;
   archived: boolean;
   blocked: boolean;
   blocker: boolean;
-  branches: ClubhouseBranch[];
-  comments: ClubhouseComment[];
-  commits: ClubhouseCommit[];
+  branches: ShortcutBranch[];
+  comments: ShortcutComment[];
+  commits: ShortcutCommit[];
   completed: boolean;
   completed_at: string | null;
   completed_at_override: string | null;
@@ -302,14 +302,14 @@ export interface ClubhouseStory {
   estimate: number | null;
   external_id: string | null;
   external_links: string[];
-  files: ClubhouseFile[];
+  files: ShortcutFile[];
   follower_ids: string[];
   group_mention_ids: string[];
   id: number;
   iteration_id: number | null;
-  labels: ClubhouseLabel[];
+  labels: ShortcutLabel[];
   lead_time: number;
-  linked_files: ClubhouseLinkedFile[];
+  linked_files: ShortcutLinkedFile[];
   member_mention_ids: string[];
   mention_ids: string[];
   moved_at: string | null;
@@ -318,21 +318,21 @@ export interface ClubhouseStory {
   position: number;
   previous_iteration_ids: number[];
   project_id: number;
-  pull_requests: ClubhousePullRequest[];
+  pull_requests: ShortcutPullRequest[];
   requested_by_id: string;
   started: boolean;
   started_at: string | null;
   started_at_override: string | null;
-  stats: ClubhouseStoryStats;
-  story_links: ClubhouseTypedStoryLink[];
+  stats: ShortcutStoryStats;
+  story_links: ShortcutTypedStoryLink[];
   story_type: "feature" | "bug" | "chore";
-  tasks: ClubhouseTask[];
+  tasks: ShortcutTask[];
   updated_at: string | null;
   workflow_state_id: number;
 }
 
-/** Request parameters for creating a Comment on a Clubhouse Story. */
-export interface ClubhouseCreateStoryCommentParams {
+/** Request parameters for creating a Comment on a Shortcut Story. */
+export interface ShortcutCreateStoryCommentParams {
   author_id?: string;
   created_at?: string;
   external_id?: string;
@@ -340,31 +340,31 @@ export interface ClubhouseCreateStoryCommentParams {
   updated_at?: string;
 }
 
-/** Request parameters for creating a Label on a Clubhouse story. */
-export interface ClubhouseCreateLabelParams {
+/** Request parameters for creating a Label on a Shortcut story. */
+export interface ShortcutCreateLabelParams {
   color: string;
   description: string;
   external_id: string;
   name: string;
 }
 
-export interface ClubhouseCreateStoryLinkParams {
+export interface ShortcutCreateStoryLinkParams {
   object_id: number;
   subject_id: number;
   verb: "blocks" | "duplicates" | "relates to";
 }
 
-export interface ClubhouseCreateTaskParams {
+export interface ShortcutCreateTaskParams {
   complete?: boolean;
   description: string;
   external_id?: string;
   owner_ids?: string[];
 }
 
-/** Create Story is used to add a new story to your Clubhouse. */
-export interface ClubhouseCreateStoryBody {
+/** Create Story is used to add a new story to your Shortcut. */
+export interface ShortcutCreateStoryBody {
   archived?: boolean;
-  comments?: ClubhouseCreateStoryCommentParams[];
+  comments?: ShortcutCreateStoryCommentParams[];
   completed_at_override?: string;
   created_at?: string;
   deadline?: string | null;
@@ -376,22 +376,22 @@ export interface ClubhouseCreateStoryBody {
   file_ids?: number[];
   follower_ids?: string[];
   iteration_id?: number | null;
-  labels?: ClubhouseCreateLabelParams[];
+  labels?: ShortcutCreateLabelParams[];
   linked_file_ids?: number[];
   name: string;
   owner_ids?: string[];
   project_id: number;
   requested_by_id?: string;
   started_at_override?: string;
-  story_links?: ClubhouseCreateStoryLinkParams[];
+  story_links?: ShortcutCreateStoryLinkParams[];
   story_type?: "bug" | "chore" | "feature";
-  tasks?: ClubhouseCreateTaskParams[];
+  tasks?: ShortcutCreateTaskParams[];
   updated_at?: string;
   workflow_state_id?: number;
 }
 
 /** Update Story can be used to update Story properties. */
-export interface ClubhouseUpdateStoryBody {
+export interface ShortcutUpdateStoryBody {
   after_id?: number;
   archived?: boolean;
   before_id?: number;
@@ -404,7 +404,7 @@ export interface ClubhouseUpdateStoryBody {
   file_ids?: number[];
   follower_ids?: string[];
   iteration_id?: number | null;
-  labels?: ClubhouseCreateLabelParams[];
+  labels?: ShortcutCreateLabelParams[];
   linked_file_ids?: number[];
   name?: string;
   owner_ids?: string[];
@@ -416,8 +416,8 @@ export interface ClubhouseUpdateStoryBody {
   workflow_state_id?: number;
 }
 
-/** An Iteration is a defined, time-boxed period of development for a collection of Stories. In Clubhouse, Iterations can span multiple Epics, Projects, and Workflows. Iterations and sprints are often interchangeable terms. */
-export interface ClubhouseIteration {
+/** An Iteration is a defined, time-boxed period of development for a collection of Stories. In Shortcut, Iterations can span multiple Epics, Projects, and Workflows. Iterations and sprints are often interchangeable terms. */
+export interface ShortcutIteration {
   entity_type: "iteration";
   app_url: string;
   created_at: string;
@@ -427,15 +427,15 @@ export interface ClubhouseIteration {
   group_ids: string[];
   group_mention_ids: string[];
   id: number;
-  labels: ClubhouseLabel[];
+  labels: ShortcutLabel[];
   member_mention_ids: string[];
   mention_ids: string[];
   name: string;
   start_date: string;
-  stats: ClubhouseProjectStats;
+  stats: ShortcutProjectStats;
   status: "unstarted" | "started" | "done";
   updated_at: string;
 }
 
 /** IterationSlim represents the same resource as an Iteration, but is more light-weight. */
-export type ClubhouseIterationSlim = Omit<ClubhouseIteration, "description">;
+export type ShortcutIterationSlim = Omit<ShortcutIteration, "description">;
