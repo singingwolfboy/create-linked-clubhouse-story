@@ -476,7 +476,6 @@ function getShortcutUserId(githubUsername, http) {
             username: githubUsername,
         });
         const user = userResponse.data;
-        core.debug(`User: ${JSON.stringify(user)}`)
         if (user.email) {
             return emailToShortcutId.get(user.email);
         }
