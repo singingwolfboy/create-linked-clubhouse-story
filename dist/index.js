@@ -368,7 +368,7 @@ exports.delay = exports.getShortcutIterationInfo = exports.getLatestMatchingShor
 const core = __importStar(__nccwpck_require__(186));
 const github = __importStar(__nccwpck_require__(438));
 const mustache_1 = __importDefault(__nccwpck_require__(272));
-exports.SHORTCUT_STORY_URL_REGEXP = /https:\/\/app.shortcut.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
+exports.SHORTCUT_STORY_URL_REGEXP = /https:\/\/app.shortcut.com\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
 exports.SHORTCUT_BRANCH_NAME_REGEXP = /^(?:.+[-/])?ch(\d+)(?:[-/].+)?$/;
 /**
  * Convert a Map to a sorted string representation. Useful for debugging.

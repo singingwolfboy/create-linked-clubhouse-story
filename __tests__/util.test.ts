@@ -248,7 +248,7 @@ test("getShortcutURLFromPullRequest", async () => {
 test("getShortcutURLFromPullRequest desc", async () => {
   const payload = {
     pull_request: {
-      body: "Shortcut story: https://app.shortcut.io/org/story/12345",
+      body: "Shortcut story: https://app.shortcut.com/org/story/12345",
       number: 123,
     },
     repository: {
@@ -260,7 +260,7 @@ test("getShortcutURLFromPullRequest desc", async () => {
   };
 
   const url = await util.getShortcutURLFromPullRequest(payload as any);
-  expect(url).toEqual("https://app.shortcut.io/org/story/12345");
+  expect(url).toEqual("https://app.shortcut.com/org/story/12345");
 });
 
 test("getShortcutURLFromPullRequest comment", async () => {
@@ -281,11 +281,11 @@ test("getShortcutURLFromPullRequest comment", async () => {
     .get("/repos/octocat/example/issues/123/comments")
     .reply(200, [
       { body: "no url here, either!" },
-      { body: "Shortcut story: https://app.shortcut.io/org/story/12345" },
+      { body: "Shortcut story: https://app.shortcut.com/org/story/12345" },
     ]);
 
   const url = await util.getShortcutURLFromPullRequest(payload as any);
-  expect(url).toEqual("https://app.shortcut.io/org/story/12345");
+  expect(url).toEqual("https://app.shortcut.com/org/story/12345");
 
   scope.done();
 });

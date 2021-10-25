@@ -15,8 +15,8 @@ import {
 } from "./types";
 
 export const SHORTCUT_STORY_URL_REGEXP =
-  /https:\/\/app.shortcut.io\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
-export const SHORTCUT_BRANCH_NAME_REGEXP = /^(?:.+[-/])?ch(\d+)(?:[-/].+)?$/;
+  /https:\/\/app.shortcut.com\/\w+\/story\/(\d+)(\/[A-Za-z0-9-]*)?/;
+export const SHORTCUT_BRANCH_NAME_REGEXP = /^(?:.+[-/])?sc(\d+)(?:[-/].+)?$/;
 
 interface Stringable {
   toString(): string;

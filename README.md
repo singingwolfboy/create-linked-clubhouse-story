@@ -7,7 +7,7 @@ a Shortcut story in the description.
 
 ## Basic Usage
 
-[Create a Shortcut API token](https://app.shortcut.io/settings/account/api-tokens),
+[Create a Shortcut API token](https://app.shortcut.com/settings/account/api-tokens),
 and store it as an encrypted secret in your GitHub repository settings.
 [Check the GitHub documentation for how to create an encrypted secret.](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets)
 Name this secret `SHORTCUT_TOKEN`.
@@ -142,9 +142,9 @@ formatted string. Here's an example:
 The keys of this JSON object must be GitHub usernames, while the values
 must be Shortcut UUIDs that identify members. Unfortunately, these UUIDs
 are not exposed on the Shortcut website; the best way to look them up is to
-[go to the User Directory for your Shortcut workspace](https://app.shortcut.io/settings/users),
+[go to the User Directory for your Shortcut workspace](https://app.shortcut.com/settings/users),
 open the Developer Tools in your browser, find the API request for
-`https://app.shortcut.io/backend/api/private/members`,
+`https://app.shortcut.com/backend/api/private/members`,
 and examine the API response to find the `id` for each user.
 Note that Shortcut makes a distinction between a `User` and a `Member`:
 you need to look up the UUID for the `Member` object.
