@@ -8,7 +8,7 @@ jobs:
   clubhouse-create:
     runs-on: ubuntu-latest
     steps:
-      - uses: Grayscale-Labs/create-linked-clubhouse-story@v1.8
+      - uses: Grayscale-Labs/create-linked-clubhouse-story@sanfordleach/sc-4894/fix-clubhouse-story-gh-action
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           clubhouse-token: ${{ secrets.CLUBHOUSE_TOKEN }}
