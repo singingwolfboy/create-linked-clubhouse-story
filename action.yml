@@ -1,53 +1,53 @@
-name: Create Linked Clubhouse Story
+name: Create Linked Shortcut Story
 author: David Baumgold <david@davidbaumgold.com>
 description: >-
-  When a pull request is opened, create a linked story on Clubhouse
+  When a pull request is opened, create a linked story on Shortcut
   if the description does not already link to one.
 inputs:
   github-token:
     description: API token for GitHub. Can be passed in using {{ secrets.GITHUB_TOKEN }}
     required: true
-  clubhouse-token:
-    description: API token for Clubhouse.io
+  shortcut-token:
+    description: API token for Shortcut.com
     required: true
   project-name:
-    description: The name of the Clubhouse.io project to create stories in
+    description: The name of the Shortcut.com project to create stories in
     required: true
   opened-state-name:
-    description: The name of the workflow state for Clubhouse stories when a pull request is created.
+    description: The name of the workflow state for Shortcut stories when a pull request is created.
   closed-state-name:
-    description: The name of the workflow state for Clubhouse stories when a pull request is closed.
+    description: The name of the workflow state for Shortcut stories when a pull request is closed.
     required: true
   merged-state-name:
-    description: The name of the workflow state for Clubhouse stories when a pull request is merged.
+    description: The name of the workflow state for Shortcut stories when a pull request is merged.
     required: true
   comment-template:
     description: >-
       A Mustache template for the comment posted on a pull request, after the
-      Clubhouse story is successfully created. The template is populated
+      Shortcut story is successfully created. The template is populated
       with a `story` variable.
-    default: "Clubhouse story: {{{ story.app_url }}}"
+    default: "Shortcut story: {{{ story.app_url }}}"
   story-title-template:
     description: >-
-      A Mustache template used for the story title in Clubhouse. The template is populated with a
+      A Mustache template used for the story title in Shortcut. The template is populated with a
       `payload` variable.
     default: "{{{ payload.pull_request.title }}}"
   story-description-template:
     description: >-
-      A Mustache template used for the story description in Clubhouse. The template is populated with a
+      A Mustache template used for the story description in Shortcut. The template is populated with a
       `payload` variable.
     default: "{{{ payload.pull_request.body }}}"
   only-users:
-    description: Comma-separated list of specific GitHub users to create Clubhouse stories for. 
+    description: Comma-separated list of specific GitHub users to create Shortcut stories for.
   ignored-users:
     description: Comma-separated list of GitHub users to ignore. Often used for bots.
   user-map:
-    description: Map GitHub usernames to Clubhouse UUIDs
+    description: Map GitHub usernames to Shortcut UUIDs
   label-iteration-group-map:
-    description: Map GitHub labels to a Clubhouse Group to pull Iterations for linking from
+    description: Map GitHub labels to a Shortcut Group to pull Iterations for linking from
 outputs:
   story-id:
-    description: The ID of the associated story on Clubhouse
+    description: The ID of the associated story on Shortcut
 runs:
   using: node12
   main: dist/index.js

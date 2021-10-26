@@ -4,26 +4,26 @@ import { PullRequestOpenedEvent } from "@octokit/webhooks-types";
 import { HttpClient } from "@actions/http-client";
 import Mustache from "mustache";
 import {
-  CLUBHOUSE_STORY_URL_REGEXP,
-  getClubhouseURLFromPullRequest,
-  createClubhouseStory,
+  SHORTCUT_STORY_URL_REGEXP,
+  getShortcutURLFromPullRequest,
+  createShortcutStory,
   addCommentToPullRequest,
-  getClubhouseStoryIdFromBranchName,
+  getShortcutStoryIdFromBranchName,
 } from "./util";
 
 export default async function opened(): Promise<void> {
   const payload = context.payload as PullRequestOpenedEvent;
   const branchName = payload.pull_request.head.ref;
-  let storyId = getClubhouseStoryIdFromBranchName(branchName);
+  let storyId = getShortcutStoryIdFromBranchName(branchName);
   if (storyId) {
     core.debug(`found story ID ${storyId} in branch ${branchName}`);
     core.setOutput("story-id", storyId);
     return;
   }
 
-  const clubhouseURL = await getClubhouseURLFromPullRequest(payload);
-  if (clubhouseURL) {
-    const match = clubhouseURL.match(CLUBHOUSE_STORY_URL_REGEXP);
+  const shortcutURL = await getShortcutURLFromPullRequest(payload);
+  if (shortcutURL) {
+    const match = shortcutURL.match(SHORTCUT_STORY_URL_REGEXP);
     if (match) {
       storyId = match[1];
       core.setOutput("story-id", storyId);
@@ -33,7 +33,7 @@ export default async function opened(): Promise<void> {
 
   const http = new HttpClient();
 
-  const story = await createClubhouseStory(payload, http);
+  const story = await createShortcutStory(payload, http);
   if (!story) {
     return;
   }

@@ -1,7 +1,7 @@
 {
-  "name": "create-linked-clubhouse-story",
+  "name": "create-linked-shortcut-story",
   "version": "1.0.0",
-  "description": "A GitHub Action to automatically create a linked story on Clubhouse.io",
+  "description": "A GitHub Action to automatically create a linked story on Shortcut.com",
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
@@ -14,19 +14,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/singingwolfboy/create-linked-clubhouse-story.git"
+    "url": "git+https://github.com/singingwolfboy/create-linked-shortcut-story.git"
   },
   "keywords": [
     "GitHub",
     "Pull Request",
-    "Clubhouse"
+    "Shortcut"
   ],
   "author": "David Baumgold <david@davidbaumgold.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/singingwolfboy/create-linked-clubhouse-story/issues"
+    "url": "https://github.com/singingwolfboy/create-linked-shortcut-story/issues"
   },
-  "homepage": "https://github.com/singingwolfboy/create-linked-clubhouse-story#readme",
+  "homepage": "https://github.com/singingwolfboy/create-linked-shortcut-story#readme",
   "dependencies": {
     "@actions/core": "^1.3.0",
     "@actions/github": "^5.0.0",
