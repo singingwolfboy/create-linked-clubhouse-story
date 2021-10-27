@@ -5,6 +5,8 @@ automatically create a story on [Shortcut](https://shortcut.com/) when
 a pull request is opened, unless the pull request already has a link to
 a Shortcut story in the description.
 
+**NOTE**: You must use v2.0+ -- older versions reference "Clubhouse" (former name of Shortcut)
+
 ## Basic Usage
 
 [Create a Shortcut API token](https://app.shortcut.com/settings/account/api-tokens),
@@ -23,7 +25,7 @@ jobs:
   shortcut:
     runs-on: ubuntu-latest
     steps:
-      - uses: singingwolfboy/create-linked-shortcut-story@v1.8
+      - uses: singingwolfboy/create-linked-shortcut-story@v2.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           shortcut-token: ${{ secrets.SHORTCUT_TOKEN }}
@@ -59,7 +61,7 @@ You can customize the comment posted on pull requests using the `comment-templat
 variable, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-shortcut-story@v1.8
+- uses: singingwolfboy/create-linked-shortcut-story@v2.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     shortcut-token: ${{ secrets.SHORTCUT_TOKEN }}
@@ -89,7 +91,7 @@ You can customize the Shortcut **title** and **description** when creating stori
 variables, like this:
 
 ```yaml
-- uses: singingwolfboy/create-linked-shortcut-story@v1.8
+- uses: singingwolfboy/create-linked-shortcut-story@v2.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     shortcut-token: ${{ secrets.SHORTCUT_TOKEN }}
@@ -127,7 +129,7 @@ map GitHub users to Shortcut users. The user map should be passed in the
 formatted string. Here's an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-shortcut-story@v1.8
+- uses: singingwolfboy/create-linked-shortcut-story@v2.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     shortcut-token: ${{ secrets.SHORTCUT_TOKEN }}
@@ -155,7 +157,7 @@ You can also add a list of GitHub users to ignore for this integration by using 
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-shortcut-story@v1.8
+- uses: singingwolfboy/create-linked-shortcut-story@v2.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     shortcut-token: ${{ secrets.SHORTCUT_TOKEN }}
@@ -169,7 +171,7 @@ You can also add a list of GitHub `only-users` for this integration. This works 
 Multiple users should be separated by commas.
 
 ```yaml
-- uses: singingwolfboy/create-linked-shortcut-story@v1.8
+- uses: singingwolfboy/create-linked-shortcut-story@v2.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     shortcut-token: ${{ secrets.SHORTCUT_TOKEN }}
@@ -218,7 +220,7 @@ Next, provide a JSON-formatted string to the `label-iteration-group-map` input.
 This is used to map GitHub labels to Shortcut groups. Here is an example:
 
 ```yaml
-- uses: singingwolfboy/create-linked-shortcut-story@v1.8
+- uses: singingwolfboy/create-linked-shortcut-story@v2.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     shortcut-token: ${{ secrets.SHORTCUT_TOKEN }}
